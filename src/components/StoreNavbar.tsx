@@ -1,39 +1,43 @@
 import { Search, Heart, ShoppingBag, User, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useCart } from "@/context/CartContext";
+import { Link } from "react-router-dom";
 
-const navLinks = ["MEN", "WOMEN", "ACCESSORIES", "NEW DROPS"];
+const navLinks = [
+  { label: "MEN", href: "/category/men" },
+  { label: "WOMEN", href: "/category/women" },
+  { label: "ACCESSORIES", href: "#" },
+  { label: "NEW DROPS", href: "#" },
+];
 
 const StoreNavbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const { totalItems, setIsOpen } = useCart();
 
   return (
     <nav className="sticky top-0 z-50 bg-card border-b border-border shadow-card">
       <div className="container mx-auto flex items-center justify-between px-4 py-3">
-        {/* Logo */}
-        <a href="/" className="font-display text-3xl tracking-tight text-foreground">
+        <Link to="/" className="font-display text-3xl tracking-tight text-foreground">
           DRIP<span className="text-primary">KART</span>
-        </a>
+        </Link>
 
-        {/* Desktop nav */}
         <ul className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => (
-            <li key={link}>
-              <a
-                href="#"
+            <li key={link.label}>
+              <Link
+                to={link.href}
                 className="font-display text-lg tracking-wide text-muted-foreground hover:text-foreground transition-colors relative group"
               >
-                {link}
+                {link.label}
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary group-hover:w-full transition-all" />
-              </a>
+              </Link>
             </li>
           ))}
         </ul>
 
-        {/* Actions */}
         <div className="flex items-center gap-3">
-          {/* Search */}
           <AnimatePresence>
             {searchOpen && (
               <motion.input
@@ -52,11 +56,13 @@ const StoreNavbar = () => {
           <button className="p-2 rounded-full hover:bg-muted transition-colors hidden sm:block">
             <Heart className="w-5 h-5 text-foreground" />
           </button>
-          <button className="p-2 rounded-full hover:bg-muted transition-colors relative">
+          <button onClick={() => setIsOpen(true)} className="p-2 rounded-full hover:bg-muted transition-colors relative">
             <ShoppingBag className="w-5 h-5 text-foreground" />
-            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-secondary text-secondary-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
-              3
-            </span>
+            {totalItems > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-secondary text-secondary-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
+                {totalItems}
+              </span>
+            )}
           </button>
           <button className="p-2 rounded-full hover:bg-muted transition-colors hidden sm:block">
             <User className="w-5 h-5 text-foreground" />
@@ -67,7 +73,6 @@ const StoreNavbar = () => {
         </div>
       </div>
 
-      {/* Mobile menu */}
       <AnimatePresence>
         {mobileOpen && (
           <motion.div
@@ -78,10 +83,10 @@ const StoreNavbar = () => {
           >
             <ul className="flex flex-col px-4 py-4 gap-3">
               {navLinks.map((link) => (
-                <li key={link}>
-                  <a href="#" className="font-display text-xl tracking-wide text-foreground hover:text-primary transition-colors">
-                    {link}
-                  </a>
+                <li key={link.label}>
+                  <Link to={link.href} onClick={() => setMobileOpen(false)} className="font-display text-xl tracking-wide text-foreground hover:text-primary transition-colors">
+                    {link.label}
+                  </Link>
                 </li>
               ))}
             </ul>
