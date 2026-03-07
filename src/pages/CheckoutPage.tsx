@@ -1,0 +1,137 @@
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { CreditCard, Truck, ShieldCheck, ArrowLeft } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useCart } from "@/context/CartContext";
+import StoreNavbar from "@/components/StoreNavbar";
+import StoreFooter from "@/components/StoreFooter";
+import { useToast } from "@/hooks/use-toast";
+
+const CheckoutPage = () => {
+  const { items, totalPrice, clearCart } = useCart();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const [paymentMethod, setPaymentMethod] = useState<"card" | "upi" | "cod">("card");
+  const [form, setForm] = useState({ name: "", email: "", phone: "", address: "", city: "", pincode: "", state: "" });
+  const [placing, setPlacing] = useState(false);
+
+  const shipping = totalPrice > 999 ? 0 : 99;
+  const total = totalPrice + shipping;
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handlePlaceOrder = () => {
+    if (!form.name || !form.email || !form.phone || !form.address || !form.city || !form.pincode) {
+      toast({ title: "Missing fields", description: "Please fill in all address fields", variant: "destructive" });
+      return;
+    }
+    setPlacing(true);
+    setTimeout(() => {
+      clearCart();
+      toast({ title: "Order Placed! 🎉", description: "Your order has been placed successfully." });
+      navigate("/orders");
+    }, 1500);
+  };
+
+  if (items.length === 0) {
+    return (
+      <div className="min-h-screen bg-background">
+        <StoreNavbar />
+        <div className="container mx-auto px-4 py-20 text-center">
+          <h1 className="font-display text-3xl text-foreground mb-4">YOUR BAG IS EMPTY</h1>
+          <p className="font-body text-muted-foreground mb-6">Add items to your bag before checkout.</p>
+          <Link to="/">
+            <Button className="bg-primary text-primary-foreground font-display">CONTINUE SHOPPING</Button>
+          </Link>
+        </div>
+        <StoreFooter />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <StoreNavbar />
+      <div className="container mx-auto px-4 py-6 max-w-5xl">
+        <Link to="/" className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground font-body mb-4 transition-colors">
+          <ArrowLeft className="w-4 h-4" /> Continue Shopping
+        </Link>
+        <h1 className="font-display text-3xl text-foreground mb-6">CHECKOUT</h1>
+
+        <div className="grid md:grid-cols-3 gap-6">
+          {/* Address + Payment */}
+          <div className="md:col-span-2 space-y-6">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-card rounded-2xl border border-border p-6">
+              <h2 className="font-display text-xl text-foreground mb-4 flex items-center gap-2"><Truck className="w-5 h-5 text-primary" /> DELIVERY ADDRESS</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <Input name="name" placeholder="Full Name" value={form.name} onChange={handleChange} className="font-body" />
+                <Input name="email" placeholder="Email" type="email" value={form.email} onChange={handleChange} className="font-body" />
+                <Input name="phone" placeholder="Phone Number" value={form.phone} onChange={handleChange} className="font-body" />
+                <Input name="pincode" placeholder="Pincode" value={form.pincode} onChange={handleChange} className="font-body" />
+                <Input name="address" placeholder="Street Address" value={form.address} onChange={handleChange} className="font-body sm:col-span-2" />
+                <Input name="city" placeholder="City" value={form.city} onChange={handleChange} className="font-body" />
+                <Input name="state" placeholder="State" value={form.state} onChange={handleChange} className="font-body" />
+              </div>
+            </motion.div>
+
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-card rounded-2xl border border-border p-6">
+              <h2 className="font-display text-xl text-foreground mb-4 flex items-center gap-2"><CreditCard className="w-5 h-5 text-primary" /> PAYMENT METHOD</h2>
+              <div className="space-y-3">
+                {([["card", "Credit / Debit Card"], ["upi", "UPI / Google Pay"], ["cod", "Cash on Delivery"]] as const).map(([val, label]) => (
+                  <label key={val} className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-colors ${paymentMethod === val ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground"}`}>
+                    <input type="radio" name="payment" checked={paymentMethod === val} onChange={() => setPaymentMethod(val)} className="accent-primary" />
+                    <span className="font-body text-foreground">{label}</span>
+                  </label>
+                ))}
+              </div>
+              {paymentMethod === "card" && (
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <Input placeholder="Card Number" className="font-body sm:col-span-2" />
+                  <Input placeholder="MM/YY" className="font-body" />
+                  <Input placeholder="CVV" className="font-body" />
+                </div>
+              )}
+            </motion.div>
+          </div>
+
+          {/* Order Summary */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="bg-card rounded-2xl border border-border p-6 h-fit sticky top-24">
+            <h2 className="font-display text-xl text-foreground mb-4 flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-primary" /> ORDER SUMMARY</h2>
+            <div className="space-y-3 mb-4">
+              {items.map((item) => (
+                <div key={`${item.productId}-${item.size}-${item.color}`} className="flex items-center gap-3">
+                  <img src={item.image} alt={item.name} className="w-12 h-12 rounded-lg object-cover" />
+                  <div className="flex-1 min-w-0">
+                    <p className="font-body text-sm text-foreground truncate">{item.name}</p>
+                    <p className="font-body text-xs text-muted-foreground">{item.size} · {item.color} · x{item.quantity}</p>
+                  </div>
+                  <p className="font-display text-sm text-foreground">₹{item.price * item.quantity}</p>
+                </div>
+              ))}
+            </div>
+            <div className="border-t border-border pt-3 space-y-2">
+              <div className="flex justify-between font-body text-sm text-muted-foreground">
+                <span>Subtotal</span><span>₹{totalPrice}</span>
+              </div>
+              <div className="flex justify-between font-body text-sm text-muted-foreground">
+                <span>Shipping</span><span>{shipping === 0 ? "FREE" : `₹${shipping}`}</span>
+              </div>
+              <div className="flex justify-between font-display text-lg text-foreground pt-2 border-t border-border">
+                <span>TOTAL</span><span>₹{total}</span>
+              </div>
+            </div>
+            <Button onClick={handlePlaceOrder} disabled={placing} className="w-full mt-4 bg-primary text-primary-foreground hover:bg-primary/90 font-display tracking-wide h-12 text-base">
+              {placing ? "PLACING ORDER..." : "PLACE ORDER"}
+            </Button>
+            <p className="text-xs text-muted-foreground text-center mt-2 font-body">Free shipping on orders above ₹999</p>
+          </motion.div>
+        </div>
+      </div>
+      <StoreFooter />
+    </div>
+  );
+};
+
+export default CheckoutPage;
