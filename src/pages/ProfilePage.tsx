@@ -1,27 +1,42 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { User, ShoppingBag, Heart, MapPin, Settings, LogIn } from "lucide-react";
-import { Link } from "react-router-dom";
+import { User, ShoppingBag, Heart, MapPin, Settings, LogIn, LogOut, Package } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import StoreNavbar from "@/components/StoreNavbar";
 import StoreFooter from "@/components/StoreFooter";
+import { useToast } from "@/hooks/use-toast";
 
 const menuItems = [
-  { icon: ShoppingBag, label: "My Orders", desc: "Track, return, or buy things again", href: "#" },
+  { icon: Package, label: "My Orders", desc: "Track, return, or buy things again", href: "/orders" },
   { icon: Heart, label: "My Wishlist", desc: "View your favourite items", href: "/wishlist" },
-  { icon: MapPin, label: "Addresses", desc: "Save addresses for a hassle-free checkout", href: "#" },
-  { icon: Settings, label: "Settings", desc: "Manage notifications, password & more", href: "#" },
+  { icon: MapPin, label: "Addresses", desc: "Save addresses for a hassle-free checkout", href: "/addresses" },
+  { icon: Settings, label: "Settings", desc: "Manage notifications, password & more", href: "/settings" },
 ];
 
 const ProfilePage = () => {
   const { totalItems } = useCart();
   const { totalItems: wishlistCount } = useWishlist();
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("dripkart_user");
+    if (stored) setUser(JSON.parse(stored));
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("dripkart_user");
+    setUser(null);
+    toast({ title: "Logged out successfully" });
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <StoreNavbar />
-
       <div className="container mx-auto px-4 py-8 max-w-2xl">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="bg-card rounded-2xl p-6 md:p-8 border border-border mb-6">
           <div className="flex items-center gap-4">
@@ -29,13 +44,19 @@ const ProfilePage = () => {
               <User className="w-8 h-8 text-primary" />
             </div>
             <div>
-              <h1 className="font-display text-2xl text-foreground">GUEST USER</h1>
-              <p className="font-body text-sm text-muted-foreground">Sign in to access your account</p>
+              <h1 className="font-display text-2xl text-foreground">{user ? user.name.toUpperCase() : "GUEST USER"}</h1>
+              <p className="font-body text-sm text-muted-foreground">{user ? user.email : "Sign in to access your account"}</p>
             </div>
           </div>
-          <Button className="w-full mt-4 bg-primary text-primary-foreground hover:bg-primary/90 gap-2 font-display tracking-wide">
-            <LogIn className="w-4 h-4" /> SIGN IN / REGISTER
-          </Button>
+          {user ? (
+            <Button onClick={handleLogout} variant="outline" className="w-full mt-4 gap-2 font-display tracking-wide">
+              <LogOut className="w-4 h-4" /> SIGN OUT
+            </Button>
+          ) : (
+            <Button onClick={() => navigate("/auth")} className="w-full mt-4 bg-primary text-primary-foreground hover:bg-primary/90 gap-2 font-display tracking-wide">
+              <LogIn className="w-4 h-4" /> SIGN IN / REGISTER
+            </Button>
+          )}
         </motion.div>
 
         <div className="grid grid-cols-2 gap-3 mb-6">
@@ -67,7 +88,6 @@ const ProfilePage = () => {
           ))}
         </div>
       </div>
-
       <StoreFooter />
     </div>
   );

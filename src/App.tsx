@@ -14,6 +14,11 @@ import NewDropsPage from "./pages/NewDropsPage";
 import AccessoriesPage from "./pages/AccessoriesPage";
 import SearchPage from "./pages/SearchPage";
 import ProfilePage from "./pages/ProfilePage";
+import CheckoutPage from "./pages/CheckoutPage";
+import AuthPage from "./pages/AuthPage";
+import OrdersPage from "./pages/OrdersPage";
+import AddressesPage from "./pages/AddressesPage";
+import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +41,11 @@ const App = () => (
               <Route path="/accessories" element={<AccessoriesPage />} />
               <Route path="/search" element={<SearchPage />} />
               <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/checkout" element={<CheckoutPage />} />
+              <Route path="/auth" element={<AuthPage />} />
+              <Route path="/orders" element={<OrdersPage />} />
+              <Route path="/addresses" element={<AddressesPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
