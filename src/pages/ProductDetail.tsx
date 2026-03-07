@@ -5,6 +5,7 @@ import { Star, Heart, ShoppingBag, Truck, RotateCcw, Shield, ChevronLeft } from 
 import { Button } from "@/components/ui/button";
 import { getProductById, allProducts } from "@/data/products";
 import { useCart } from "@/context/CartContext";
+import { useWishlist } from "@/context/WishlistContext";
 import StoreNavbar from "@/components/StoreNavbar";
 import StoreFooter from "@/components/StoreFooter";
 import ProductCard from "@/components/ProductCard";
@@ -14,6 +15,7 @@ const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addItem } = useCart();
+  const { isWishlisted, toggleWishlist } = useWishlist();
   const product = getProductById(Number(id));
 
   const [selectedSize, setSelectedSize] = useState("");
@@ -30,6 +32,7 @@ const ProductDetail = () => {
     );
   }
 
+  const wishlisted = isWishlisted(product.id);
   const discount = Math.round((1 - product.price / product.originalPrice) * 100);
   const related = allProducts.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
 
@@ -47,29 +50,43 @@ const ProductDetail = () => {
     toast.success("Added to bag! 🎉");
   };
 
+  const handleWishlist = () => {
+    toggleWishlist({
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      originalPrice: product.originalPrice,
+      image: product.image,
+      category: product.category,
+    });
+    toast(wishlisted ? "Removed from wishlist" : "Added to wishlist ❤️");
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <StoreNavbar />
 
       <div className="container mx-auto px-4 py-6">
-        {/* Back */}
         <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted-foreground hover:text-foreground mb-6 font-body text-sm transition-colors">
           <ChevronLeft className="w-4 h-4" /> Back
         </button>
 
         <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
-          {/* Image */}
           <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} className="relative rounded-2xl overflow-hidden bg-muted aspect-[3/4]">
             <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
             <span className={`absolute top-4 left-4 ${product.tagColor} text-card text-xs font-bold px-3 py-1.5 rounded-full tracking-wider`}>
               {product.tag}
             </span>
-            <button className="absolute top-4 right-4 w-10 h-10 bg-card/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-secondary hover:text-secondary-foreground transition-colors">
-              <Heart className="w-5 h-5" />
+            <button
+              onClick={handleWishlist}
+              className={`absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
+                wishlisted ? "bg-secondary text-secondary-foreground" : "bg-card/80 backdrop-blur-sm hover:bg-secondary hover:text-secondary-foreground"
+              }`}
+            >
+              <Heart className={`w-5 h-5 ${wishlisted ? "fill-current" : ""}`} />
             </button>
           </motion.div>
 
-          {/* Details */}
           <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col">
             <span className="text-xs font-bold text-accent uppercase tracking-widest">{product.category}'s Collection</span>
             <h1 className="font-display text-3xl md:text-4xl text-foreground mt-2">{product.name}</h1>
@@ -89,7 +106,6 @@ const ProductDetail = () => {
             </div>
             <p className="text-xs text-muted-foreground mt-1">Inclusive of all taxes</p>
 
-            {/* Colors */}
             <div className="mt-6">
               <p className="font-body font-semibold text-sm text-foreground mb-3">COLOR: {selectedColor}</p>
               <div className="flex gap-3">
@@ -105,7 +121,6 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            {/* Sizes */}
             <div className="mt-6">
               <p className="font-body font-semibold text-sm text-foreground mb-3">SELECT SIZE</p>
               <div className="flex flex-wrap gap-2">
@@ -125,7 +140,6 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            {/* Actions */}
             <div className="flex gap-3 mt-8">
               <Button
                 onClick={handleAddToCart}
@@ -133,18 +147,24 @@ const ProductDetail = () => {
               >
                 <ShoppingBag className="w-5 h-5" /> ADD TO BAG
               </Button>
-              <Button variant="outline" className="h-14 px-6 border-2 border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground">
-                <Heart className="w-5 h-5" />
+              <Button
+                variant="outline"
+                onClick={handleWishlist}
+                className={`h-14 px-6 border-2 transition-colors ${
+                  wishlisted
+                    ? "border-secondary bg-secondary text-secondary-foreground"
+                    : "border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground"
+                }`}
+              >
+                <Heart className={`w-5 h-5 ${wishlisted ? "fill-current" : ""}`} />
               </Button>
             </div>
 
-            {/* Description */}
             <div className="mt-8 p-5 bg-card rounded-xl border border-border">
               <h3 className="font-display text-xl text-foreground mb-2">PRODUCT DETAILS</h3>
               <p className="font-body text-sm text-muted-foreground leading-relaxed">{product.description}</p>
             </div>
 
-            {/* Trust badges */}
             <div className="grid grid-cols-3 gap-3 mt-6">
               {[
                 { icon: Truck, label: "Free Delivery" },
@@ -160,7 +180,6 @@ const ProductDetail = () => {
           </motion.div>
         </div>
 
-        {/* Related */}
         {related.length > 0 && (
           <div className="mt-16">
             <h2 className="font-display text-3xl text-foreground mb-6">YOU MAY ALSO LIKE</h2>
