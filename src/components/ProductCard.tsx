@@ -1,6 +1,8 @@
 import { motion } from "framer-motion";
 import { Heart, ShoppingBag, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useWishlist } from "@/context/WishlistContext";
+import { toast } from "sonner";
 import type { Product } from "@/data/products";
 
 interface ProductCardProps {
@@ -10,6 +12,21 @@ interface ProductCardProps {
 
 const ProductCard = ({ product, index }: ProductCardProps) => {
   const navigate = useNavigate();
+  const { isWishlisted, toggleWishlist } = useWishlist();
+  const wishlisted = isWishlisted(product.id);
+
+  const handleWishlist = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleWishlist({
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      originalPrice: product.originalPrice,
+      image: product.image,
+      category: product.category,
+    });
+    toast(wishlisted ? "Removed from wishlist" : "Added to wishlist ❤️");
+  };
 
   return (
     <motion.div
@@ -31,10 +48,14 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
           {product.tag}
         </span>
         <button
-          onClick={(e) => { e.stopPropagation(); }}
-          className="absolute top-3 right-3 w-8 h-8 bg-card/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-secondary hover:text-secondary-foreground transition-colors"
+          onClick={handleWishlist}
+          className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+            wishlisted
+              ? "bg-secondary text-secondary-foreground"
+              : "bg-card/80 backdrop-blur-sm hover:bg-secondary hover:text-secondary-foreground"
+          }`}
         >
-          <Heart className="w-4 h-4" />
+          <Heart className={`w-4 h-4 ${wishlisted ? "fill-current" : ""}`} />
         </button>
         <div className="absolute bottom-0 inset-x-0 translate-y-full group-hover:translate-y-0 transition-transform">
           <button

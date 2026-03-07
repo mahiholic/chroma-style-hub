@@ -2,19 +2,21 @@ import { Search, Heart, ShoppingBag, User, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "@/context/CartContext";
-import { Link } from "react-router-dom";
+import { useWishlist } from "@/context/WishlistContext";
+import { Link, useNavigate } from "react-router-dom";
 
 const navLinks = [
   { label: "MEN", href: "/category/men" },
   { label: "WOMEN", href: "/category/women" },
-  { label: "ACCESSORIES", href: "#" },
-  { label: "NEW DROPS", href: "#" },
+  { label: "ACCESSORIES", href: "/accessories" },
+  { label: "NEW DROPS", href: "/new-drops" },
 ];
 
 const StoreNavbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   const { totalItems, setIsOpen } = useCart();
+  const { totalItems: wishlistCount } = useWishlist();
+  const navigate = useNavigate();
 
   return (
     <nav className="sticky top-0 z-50 bg-card border-b border-border shadow-card">
@@ -38,24 +40,17 @@ const StoreNavbar = () => {
         </ul>
 
         <div className="flex items-center gap-3">
-          <AnimatePresence>
-            {searchOpen && (
-              <motion.input
-                initial={{ width: 0, opacity: 0 }}
-                animate={{ width: 200, opacity: 1 }}
-                exit={{ width: 0, opacity: 0 }}
-                className="border border-border rounded-lg px-3 py-1.5 text-sm bg-background text-foreground outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Search products..."
-                autoFocus
-              />
-            )}
-          </AnimatePresence>
-          <button onClick={() => setSearchOpen(!searchOpen)} className="p-2 rounded-full hover:bg-muted transition-colors">
+          <button onClick={() => navigate("/search")} className="p-2 rounded-full hover:bg-muted transition-colors">
             <Search className="w-5 h-5 text-foreground" />
           </button>
-          <button className="p-2 rounded-full hover:bg-muted transition-colors hidden sm:block">
+          <Link to="/wishlist" className="p-2 rounded-full hover:bg-muted transition-colors relative hidden sm:flex">
             <Heart className="w-5 h-5 text-foreground" />
-          </button>
+            {wishlistCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-secondary text-secondary-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
+                {wishlistCount}
+              </span>
+            )}
+          </Link>
           <button onClick={() => setIsOpen(true)} className="p-2 rounded-full hover:bg-muted transition-colors relative">
             <ShoppingBag className="w-5 h-5 text-foreground" />
             {totalItems > 0 && (
@@ -64,9 +59,9 @@ const StoreNavbar = () => {
               </span>
             )}
           </button>
-          <button className="p-2 rounded-full hover:bg-muted transition-colors hidden sm:block">
+          <Link to="/profile" className="p-2 rounded-full hover:bg-muted transition-colors hidden sm:flex">
             <User className="w-5 h-5 text-foreground" />
-          </button>
+          </Link>
           <button onClick={() => setMobileOpen(!mobileOpen)} className="p-2 rounded-full hover:bg-muted transition-colors md:hidden">
             {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -89,6 +84,21 @@ const StoreNavbar = () => {
                   </Link>
                 </li>
               ))}
+              <li>
+                <Link to="/wishlist" onClick={() => setMobileOpen(false)} className="font-display text-xl tracking-wide text-foreground hover:text-primary transition-colors flex items-center gap-2">
+                  <Heart className="w-5 h-5" /> WISHLIST
+                </Link>
+              </li>
+              <li>
+                <Link to="/profile" onClick={() => setMobileOpen(false)} className="font-display text-xl tracking-wide text-foreground hover:text-primary transition-colors flex items-center gap-2">
+                  <User className="w-5 h-5" /> PROFILE
+                </Link>
+              </li>
+              <li>
+                <Link to="/search" onClick={() => setMobileOpen(false)} className="font-display text-xl tracking-wide text-foreground hover:text-primary transition-colors flex items-center gap-2">
+                  <Search className="w-5 h-5" /> SEARCH
+                </Link>
+              </li>
             </ul>
           </motion.div>
         )}
