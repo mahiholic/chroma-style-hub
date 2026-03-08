@@ -42,7 +42,7 @@ const App = () => (
             <AdminAuthProvider>
               <Toaster />
               <Sonner />
-            <BrowserRouter>
+            <BrowserRouter basename="/chroma-style-hub">
               <CartDrawer />
               <Routes>
                 {/* Store routes */}
