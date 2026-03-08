@@ -130,7 +130,7 @@ const ProductDetail = () => {
           {/* Left: Product Image */}
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
             <div className="relative rounded-lg overflow-hidden bg-muted aspect-[3/4]">
-              <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+              <img src={displayImage} alt={product.name} className="w-full h-full object-cover" />
               <button
                 onClick={handleWishlist}
                 className={`absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-sm ${
@@ -140,13 +140,28 @@ const ProductDetail = () => {
                 <Heart className={`w-5 h-5 ${wishlisted ? "fill-current" : ""}`} />
               </button>
             </div>
-            {/* Thumbnail strip (mock multiple views) */}
+            {/* Thumbnail strip */}
             <div className="flex gap-2">
-              {[0, 1, 2, 3].map((i) => (
-                <div key={i} className={`w-16 h-20 rounded border-2 overflow-hidden cursor-pointer ${i === 0 ? "border-primary" : "border-border hover:border-foreground"}`}>
-                  <img src={product.image} alt="" className="w-full h-full object-cover opacity-90" />
-                </div>
-              ))}
+              {product.colors.filter(c => c.image).length > 0
+                ? product.colors.filter(c => c.image).map((c, i) => (
+                    <div
+                      key={c.name}
+                      onClick={() => handleColorSelect(c.name)}
+                      className={`w-16 h-20 rounded border-2 overflow-hidden cursor-pointer ${
+                        (selectedColor === c.name || (!selectedColor && i === 0))
+                          ? "border-primary"
+                          : "border-border hover:border-foreground"
+                      }`}
+                    >
+                      <img src={c.image!} alt={c.name} className="w-full h-full object-cover" />
+                    </div>
+                  ))
+                : [0, 1, 2, 3].map((i) => (
+                    <div key={i} className={`w-16 h-20 rounded border-2 overflow-hidden cursor-pointer ${i === 0 ? "border-primary" : "border-border hover:border-foreground"}`}>
+                      <img src={product.image} alt="" className="w-full h-full object-cover opacity-90" />
+                    </div>
+                  ))
+              }
             </div>
           </motion.div>
 
