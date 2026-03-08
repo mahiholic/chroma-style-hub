@@ -9,6 +9,7 @@ import { useWishlist } from "@/context/WishlistContext";
 import StoreNavbar from "@/components/StoreNavbar";
 import StoreFooter from "@/components/StoreFooter";
 import ProductCard from "@/components/ProductCard";
+import ProductReviews from "@/components/ProductReviews";
 import { toast } from "sonner";
 
 const ProductDetail = () => {
@@ -179,6 +180,9 @@ const ProductDetail = () => {
             </div>
           </motion.div>
         </div>
+
+        {/* Reviews Section */}
+        <ProductReviews productId={product.id} productRating={product.rating} />
 
         {related.length > 0 && (
           <div className="mt-16">

@@ -17,7 +17,7 @@ const sortOptions = [
 
 const CategoryPage = () => {
   const { category } = useParams<{ category: string }>();
-  const cat = (category === "women" ? "women" : "men") as "men" | "women";
+  const cat = (category === "women" ? "women" : category === "accessories" ? "accessories" : "men") as "men" | "women" | "accessories";
   const [sortBy, setSortBy] = useState("popular");
   const [showSort, setShowSort] = useState(false);
 
@@ -36,14 +36,15 @@ const CategoryPage = () => {
     }
   }, [cat, sortBy]);
 
-  const title = cat === "men" ? "MEN'S COLLECTION" : "WOMEN'S COLLECTION";
-  const gradientClass = cat === "men" ? "gradient-cool" : "gradient-warm";
+  const titleMap = { men: "MEN'S COLLECTION", women: "WOMEN'S COLLECTION", accessories: "ACCESSORIES" };
+  const title = titleMap[cat];
+  const gradientMap = { men: "gradient-cool", women: "gradient-warm", accessories: "gradient-cool" };
+  const gradientClass = gradientMap[cat];
 
   return (
     <div className="min-h-screen bg-background">
       <StoreNavbar />
 
-      {/* Hero banner */}
       <motion.section
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -60,7 +61,6 @@ const CategoryPage = () => {
       </motion.section>
 
       <div className="container mx-auto px-4 py-8">
-        {/* Toolbar */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
@@ -97,7 +97,6 @@ const CategoryPage = () => {
           </div>
         </div>
 
-        {/* Products */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
           {products.map((product, i) => (
             <ProductCard key={product.id} product={product} index={i} />

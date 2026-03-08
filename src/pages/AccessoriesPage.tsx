@@ -1,9 +1,34 @@
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Watch } from "lucide-react";
+import { SlidersHorizontal, ChevronDown } from "lucide-react";
 import StoreNavbar from "@/components/StoreNavbar";
 import StoreFooter from "@/components/StoreFooter";
+import ProductCard from "@/components/ProductCard";
+import { getProductsByCategory } from "@/data/products";
+
+const sortOptions = [
+  { label: "Popular", value: "popular" },
+  { label: "Price: Low to High", value: "price-asc" },
+  { label: "Price: High to Low", value: "price-desc" },
+  { label: "Rating", value: "rating" },
+  { label: "Discount", value: "discount" },
+];
 
 const AccessoriesPage = () => {
+  const [sortBy, setSortBy] = useState("popular");
+  const [showSort, setShowSort] = useState(false);
+
+  const products = useMemo(() => {
+    const list = [...getProductsByCategory("accessories")];
+    switch (sortBy) {
+      case "price-asc": return list.sort((a, b) => a.price - b.price);
+      case "price-desc": return list.sort((a, b) => b.price - a.price);
+      case "rating": return list.sort((a, b) => b.rating - a.rating);
+      case "discount": return list.sort((a, b) => (1 - a.price / a.originalPrice) - (1 - b.price / b.originalPrice)).reverse();
+      default: return list;
+    }
+  }, [sortBy]);
+
   return (
     <div className="min-h-screen bg-background">
       <StoreNavbar />
@@ -15,18 +40,51 @@ const AccessoriesPage = () => {
         <div className="relative">
           <p className="font-display text-lg tracking-[0.3em] text-card/70">DRIPKART</p>
           <h1 className="font-display text-5xl md:text-7xl text-card tracking-tight mt-2">ACCESSORIES</h1>
-          <p className="font-body text-card/80 mt-3 text-sm md:text-base">Coming Soon</p>
+          <p className="font-body text-card/80 mt-3 text-sm md:text-base">{products.length} Products</p>
         </div>
       </motion.section>
 
-      <div className="container mx-auto px-4 py-20">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center justify-center gap-4">
-          <Watch className="w-20 h-20 text-muted-foreground/30" />
-          <h2 className="font-display text-2xl text-foreground">LAUNCHING SOON</h2>
-          <p className="font-body text-muted-foreground text-center max-w-md">
-            We're curating an exclusive collection of accessories. Stay tuned for caps, bags, watches, and more!
-          </p>
-        </motion.div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
+            <span className="font-body text-sm font-semibold text-foreground">Filters</span>
+          </div>
+          <div className="relative">
+            <button
+              onClick={() => setShowSort(!showSort)}
+              className="flex items-center gap-1.5 font-body text-sm font-semibold text-foreground bg-card px-4 py-2 rounded-lg border border-border hover:border-primary transition-colors"
+            >
+              Sort: {sortOptions.find((o) => o.value === sortBy)?.label}
+              <ChevronDown className={`w-4 h-4 transition-transform ${showSort ? "rotate-180" : ""}`} />
+            </button>
+            {showSort && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="absolute right-0 top-full mt-2 bg-card border border-border rounded-xl shadow-card-hover z-10 min-w-[180px] overflow-hidden"
+              >
+                {sortOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => { setSortBy(opt.value); setShowSort(false); }}
+                    className={`w-full text-left px-4 py-2.5 font-body text-sm transition-colors ${
+                      sortBy === opt.value ? "bg-primary/10 text-primary font-semibold" : "text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </motion.div>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+          {products.map((product, i) => (
+            <ProductCard key={product.id} product={product} index={i} />
+          ))}
+        </div>
       </div>
 
       <StoreFooter />

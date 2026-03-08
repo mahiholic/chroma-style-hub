@@ -5,7 +5,7 @@ import ProductCard from "@/components/ProductCard";
 
 const TrendingProducts = () => {
   const navigate = useNavigate();
-  const products = allProducts.slice(0, 6);
+  const products = allProducts.slice(0, 8);
 
   return (
     <section className="py-12 bg-background">
