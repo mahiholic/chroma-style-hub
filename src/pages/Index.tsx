@@ -1,4 +1,3 @@
-import TopBanner from "@/components/TopBanner";
 import StoreNavbar from "@/components/StoreNavbar";
 import HeroSection from "@/components/HeroSection";
 import CategoryStrip from "@/components/CategoryStrip";
@@ -10,7 +9,6 @@ import StoreFooter from "@/components/StoreFooter";
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
-      <TopBanner />
       <StoreNavbar />
       <HeroSection />
       <CategoryStrip />

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Heart, ShoppingBag, Star } from "lucide-react";
+import { Heart, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useWishlist } from "@/context/WishlistContext";
 import { toast } from "sonner";
@@ -14,6 +14,7 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
   const navigate = useNavigate();
   const { isWishlisted, toggleWishlist } = useWishlist();
   const wishlisted = isWishlisted(product.id);
+  const discount = Math.round((1 - product.price / product.originalPrice) * 100);
 
   const handleWishlist = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -30,13 +31,14 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ delay: index * 0.06 }}
+      transition={{ delay: index * 0.04 }}
       onClick={() => navigate(`/product/${product.id}`)}
-      className="group bg-card rounded-xl overflow-hidden shadow-card hover:shadow-card-hover transition-all cursor-pointer"
+      className="group bg-card rounded-lg overflow-hidden cursor-pointer border border-transparent hover:border-border hover:shadow-card transition-all"
     >
+      {/* Image */}
       <div className="relative aspect-[3/4] overflow-hidden bg-muted">
         <img
           src={product.image}
@@ -44,42 +46,42 @@ const ProductCard = ({ product, index }: ProductCardProps) => {
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
         />
-        <span className={`absolute top-3 left-3 ${product.tagColor} text-card text-[10px] md:text-xs font-bold px-2.5 py-1 rounded-full tracking-wider`}>
-          {product.tag}
-        </span>
+        {/* Rating badge */}
+        <div className="absolute bottom-2 left-2 bg-card/95 backdrop-blur-sm rounded-full px-2 py-0.5 flex items-center gap-1 shadow-sm">
+          <Star className="w-3 h-3 fill-primary text-primary" />
+          <span className="font-body text-xs font-bold text-foreground">{product.rating}</span>
+        </div>
+        {/* Wishlist */}
         <button
           onClick={handleWishlist}
-          className={`absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+          className={`absolute top-2 right-2 w-8 h-8 rounded-full flex items-center justify-center transition-all ${
             wishlisted
               ? "bg-secondary text-secondary-foreground"
-              : "bg-card/80 backdrop-blur-sm hover:bg-secondary hover:text-secondary-foreground"
+              : "bg-card/80 backdrop-blur-sm text-muted-foreground hover:text-secondary"
           }`}
         >
           <Heart className={`w-4 h-4 ${wishlisted ? "fill-current" : ""}`} />
         </button>
-        <div className="absolute bottom-0 inset-x-0 translate-y-full group-hover:translate-y-0 transition-transform">
-          <button
-            onClick={(e) => { e.stopPropagation(); navigate(`/product/${product.id}`); }}
-            className="w-full bg-foreground text-card py-3 font-body text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
-          >
-            <ShoppingBag className="w-4 h-4" />
-            VIEW PRODUCT
-          </button>
-        </div>
       </div>
-      <div className="p-3 md:p-4">
-        <h3 className="font-body text-sm font-semibold text-foreground truncate">{product.name}</h3>
-        <div className="flex items-center gap-1 mt-1">
-          <Star className="w-3.5 h-3.5 fill-primary text-primary" />
-          <span className="text-xs text-muted-foreground font-medium">{product.rating}</span>
+
+      {/* Info */}
+      <div className="p-3">
+        <p className="font-body text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">DRIPKART</p>
+        <h3 className="font-body text-sm font-medium text-foreground truncate leading-snug">{product.name}</h3>
+        <div className="flex items-center gap-2 mt-1.5">
+          <span className="font-body font-bold text-sm text-foreground">₹{product.price}</span>
+          <span className="font-body text-xs text-muted-foreground line-through">₹{product.originalPrice}</span>
+          {discount > 0 && (
+            <span className="font-body text-xs font-bold text-green-600">{discount}% OFF</span>
+          )}
         </div>
-        <div className="flex items-center gap-2 mt-2">
-          <span className="font-body font-bold text-foreground">₹{product.price}</span>
-          <span className="font-body text-sm text-muted-foreground line-through">₹{product.originalPrice}</span>
-          <span className="text-xs font-bold text-success">
-            {Math.round((1 - product.price / product.originalPrice) * 100)}% OFF
-          </span>
-        </div>
+        {product.tag && (
+          <div className="mt-1.5">
+            <span className="inline-block px-2 py-0.5 rounded font-body text-[10px] font-bold bg-muted text-muted-foreground">
+              {product.tag}
+            </span>
+          </div>
+        )}
       </div>
     </motion.div>
   );
