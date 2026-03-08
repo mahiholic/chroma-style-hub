@@ -18,6 +18,23 @@ import product17 from "@/assets/product-17.jpg";
 import product18 from "@/assets/product-18.jpg";
 import product19 from "@/assets/product-19.jpg";
 
+// Color variant images
+import blackTee from "@/assets/product-black-tee.jpg";
+import whiteTee from "@/assets/product-white-tee.jpg";
+import yellowTee from "@/assets/product-yellow-tee.jpg";
+import charcoalHoodie from "@/assets/product-charcoal-hoodie.jpg";
+import navyHoodie from "@/assets/product-navy-hoodie.jpg";
+import lavenderCrop from "@/assets/product-lavender-crop.jpg";
+import mintCrop from "@/assets/product-mint-crop.jpg";
+import oliveBomber from "@/assets/product-olive-bomber.jpg";
+import blackBomber from "@/assets/product-black-bomber.jpg";
+
+export interface ProductColor {
+  name: string;
+  hex: string;
+  image?: string;
+}
+
 export interface Product {
   id: number | string;
   name: string;
@@ -30,7 +47,7 @@ export interface Product {
   category: "men" | "women" | "accessories";
   sizes: string[];
   description: string;
-  colors: { name: string; hex: string }[];
+  colors: ProductColor[];
 }
 
 export interface Review {
@@ -69,7 +86,6 @@ export const productReviews: Record<number, Review[]> = {
   ],
 };
 
-// Generate default reviews for products without specific reviews
 export const getProductReviews = (productId: number): Review[] => {
   if (productReviews[productId]) return productReviews[productId];
   return [
@@ -95,20 +111,27 @@ export const availableCoupons: Coupon[] = [
 ];
 
 export const allProducts: Product[] = [
-  // MEN (1-6, 15-16, 23-25)
+  // MEN
   {
-    id: 1, name: "Pop Art Oversized Tee", price: 799, originalPrice: 1599, image: product1,
+    id: 1, name: "Pop Art Oversized Tee", price: 799, originalPrice: 1599, image: blackTee,
     rating: 4.5, tag: "BESTSELLER", tagColor: "bg-secondary",
     category: "men", sizes: ["S", "M", "L", "XL", "XXL"],
     description: "Stand out with this bold pop-art inspired oversized tee. Premium cotton fabric with a relaxed fit that's perfect for everyday streetwear.",
-    colors: [{ name: "Black", hex: "#1a1a1a" }, { name: "White", hex: "#f5f5f5" }, { name: "Yellow", hex: "#fbbf24" }],
+    colors: [
+      { name: "Black", hex: "#1a1a1a", image: blackTee },
+      { name: "White", hex: "#f5f5f5", image: whiteTee },
+      { name: "Yellow", hex: "#fbbf24", image: yellowTee },
+    ],
   },
   {
-    id: 2, name: "Bold Statement Hoodie", price: 1299, originalPrice: 2499, image: product2,
+    id: 2, name: "Bold Statement Hoodie", price: 1299, originalPrice: 2499, image: charcoalHoodie,
     rating: 4.7, tag: "NEW", tagColor: "bg-accent",
     category: "men", sizes: ["S", "M", "L", "XL"],
     description: "Make a statement with this heavyweight hoodie. Features a kangaroo pocket, ribbed cuffs, and an eye-catching graphic print.",
-    colors: [{ name: "Charcoal", hex: "#374151" }, { name: "Navy", hex: "#1e3a5f" }],
+    colors: [
+      { name: "Charcoal", hex: "#374151", image: charcoalHoodie },
+      { name: "Navy", hex: "#1e3a5f", image: navyHoodie },
+    ],
   },
   {
     id: 3, name: "Anime Jogger Set", price: 1499, originalPrice: 2999, image: product3,
@@ -118,11 +141,14 @@ export const allProducts: Product[] = [
     colors: [{ name: "Black", hex: "#1a1a1a" }, { name: "Grey", hex: "#9ca3af" }],
   },
   {
-    id: 5, name: "Street Bomber Jacket", price: 1999, originalPrice: 3999, image: product5,
+    id: 5, name: "Street Bomber Jacket", price: 1999, originalPrice: 3999, image: oliveBomber,
     rating: 4.6, tag: "PREMIUM", tagColor: "bg-brand-purple",
     category: "men", sizes: ["M", "L", "XL", "XXL"],
     description: "Premium bomber jacket with satin finish. Ribbed collar and cuffs with custom embroidered patches on the chest and back.",
-    colors: [{ name: "Olive", hex: "#65a30d" }, { name: "Black", hex: "#1a1a1a" }],
+    colors: [
+      { name: "Olive", hex: "#65a30d", image: oliveBomber },
+      { name: "Black", hex: "#1a1a1a", image: blackBomber },
+    ],
   },
   {
     id: 6, name: "Camo Cargo Shorts", price: 899, originalPrice: 1799, image: product6,
@@ -166,14 +192,37 @@ export const allProducts: Product[] = [
     description: "Breathable mesh-panel tank top for gym and outdoor workouts. Moisture-wicking fabric keeps you cool.",
     colors: [{ name: "White", hex: "#f5f5f5" }, { name: "Black", hex: "#1a1a1a" }, { name: "Red", hex: "#ef4444" }],
   },
-
-  // WOMEN (4, 7-12, 26-28)
   {
-    id: 4, name: "Pastel Kawaii Crop Top", price: 599, originalPrice: 1199, image: product4,
+    id: 32, name: "Acid Wash Oversized Tee", price: 699, originalPrice: 1399, image: whiteTee,
+    rating: 4.4, tag: "NEW", tagColor: "bg-accent",
+    category: "men", sizes: ["S", "M", "L", "XL", "XXL"],
+    description: "Acid washed oversized t-shirt with dropped shoulders. Perfect relaxed streetwear essential.",
+    colors: [
+      { name: "White", hex: "#f5f5f5", image: whiteTee },
+      { name: "Black", hex: "#1a1a1a", image: blackTee },
+    ],
+  },
+  {
+    id: 33, name: "Urban Zip Hoodie", price: 1499, originalPrice: 2999, image: navyHoodie,
+    rating: 4.5, tag: "BESTSELLER", tagColor: "bg-secondary",
+    category: "men", sizes: ["S", "M", "L", "XL"],
+    description: "Full-zip urban hoodie with kangaroo pocket. Heavyweight 400gsm French terry for maximum warmth.",
+    colors: [
+      { name: "Navy", hex: "#1e3a5f", image: navyHoodie },
+      { name: "Charcoal", hex: "#374151", image: charcoalHoodie },
+    ],
+  },
+
+  // WOMEN
+  {
+    id: 4, name: "Pastel Kawaii Crop Top", price: 599, originalPrice: 1199, image: lavenderCrop,
     rating: 4.8, tag: "HOT", tagColor: "bg-secondary",
     category: "women", sizes: ["XS", "S", "M", "L"],
     description: "Adorable kawaii-inspired crop top in soft pastel shades. Lightweight and breezy — ideal for festivals and sunny outings.",
-    colors: [{ name: "Lavender", hex: "#c4b5fd" }, { name: "Pink", hex: "#f9a8d4" }, { name: "Mint", hex: "#6ee7b7" }],
+    colors: [
+      { name: "Lavender", hex: "#c4b5fd", image: lavenderCrop },
+      { name: "Mint", hex: "#6ee7b7", image: mintCrop },
+    ],
   },
   {
     id: 7, name: "Floral Maxi Dress", price: 1199, originalPrice: 2399, image: product4,
@@ -187,7 +236,10 @@ export const allProducts: Product[] = [
     rating: 4.2, tag: "TRENDING", tagColor: "bg-brand-orange",
     category: "women", sizes: ["S", "M", "L", "XL"],
     description: "Bold graphic oversized tee that pairs perfectly with bike shorts or high-waisted jeans.",
-    colors: [{ name: "White", hex: "#f5f5f5" }, { name: "Black", hex: "#1a1a1a" }],
+    colors: [
+      { name: "White", hex: "#f5f5f5", image: whiteTee },
+      { name: "Black", hex: "#1a1a1a", image: blackTee },
+    ],
   },
   {
     id: 9, name: "Retro Track Pants", price: 999, originalPrice: 1999, image: product3,
@@ -238,8 +290,28 @@ export const allProducts: Product[] = [
     description: "Playful ruffle-hem mini skirt in solid colors. Pair with a crop top for a cute weekend outfit.",
     colors: [{ name: "White", hex: "#f5f5f5" }, { name: "Blush", hex: "#fda4af" }],
   },
+  {
+    id: 34, name: "Mint Fresh Crop Top", price: 549, originalPrice: 1099, image: mintCrop,
+    rating: 4.6, tag: "50% OFF", tagColor: "bg-primary",
+    category: "women", sizes: ["XS", "S", "M", "L"],
+    description: "Fresh mint green crop top with puffed sleeves. The perfect summer essential for a breezy look.",
+    colors: [
+      { name: "Mint", hex: "#6ee7b7", image: mintCrop },
+      { name: "Lavender", hex: "#c4b5fd", image: lavenderCrop },
+    ],
+  },
+  {
+    id: 35, name: "Lavender Dreams Top", price: 649, originalPrice: 1299, image: lavenderCrop,
+    rating: 4.7, tag: "NEW", tagColor: "bg-accent",
+    category: "women", sizes: ["XS", "S", "M", "L"],
+    description: "Dreamy lavender crop top with elegant puff sleeves. Ultra-soft fabric for all-day comfort.",
+    colors: [
+      { name: "Lavender", hex: "#c4b5fd", image: lavenderCrop },
+      { name: "Mint", hex: "#6ee7b7", image: mintCrop },
+    ],
+  },
 
-  // ACCESSORIES (13-14, 17-22, 29-31)
+  // ACCESSORIES
   {
     id: 13, name: "Classic Leather Watch", price: 1499, originalPrice: 2999, image: product15,
     rating: 4.8, tag: "PREMIUM", tagColor: "bg-brand-purple",
