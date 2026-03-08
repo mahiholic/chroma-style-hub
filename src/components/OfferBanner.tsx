@@ -1,6 +1,9 @@
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 const OfferBanner = () => {
+  const navigate = useNavigate();
+
   return (
     <section className="py-8">
       <div className="container mx-auto px-4">
@@ -24,7 +27,10 @@ const OfferBanner = () => {
             <p className="font-body text-accent-foreground/80 mb-6 max-w-md mx-auto">
               Mix & match across all categories. Use code <span className="font-bold text-accent-foreground">DRIP3</span> at checkout.
             </p>
-            <button className="bg-card text-foreground font-display text-lg tracking-wider px-8 py-3 rounded-full hover:shadow-glow transition-shadow">
+            <button
+              onClick={() => navigate("/")}
+              className="bg-card text-foreground font-display text-lg tracking-wider px-8 py-3 rounded-full hover:shadow-glow transition-shadow"
+            >
               SHOP NOW
             </button>
           </div>

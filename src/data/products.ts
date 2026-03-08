@@ -97,13 +97,14 @@ export const getProductReviews = (productId: number): Review[] => {
 // Coupon codes
 export interface Coupon {
   code: string;
-  type: "percentage" | "flat";
+  type: "percentage" | "flat" | "buy2get1";
   value: number;
   minOrder: number;
   description: string;
 }
 
 export const availableCoupons: Coupon[] = [
+  { code: "DRIP3", type: "buy2get1", value: 0, minOrder: 0, description: "Buy 2 Get 1 Free – cheapest item free" },
   { code: "DRIP10", type: "percentage", value: 10, minOrder: 499, description: "10% off on orders above ₹499" },
   { code: "FLAT200", type: "flat", value: 200, minOrder: 999, description: "₹200 off on orders above ₹999" },
   { code: "NEWUSER", type: "percentage", value: 15, minOrder: 0, description: "15% off for new users" },
