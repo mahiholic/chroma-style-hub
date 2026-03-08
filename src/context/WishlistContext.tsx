@@ -12,8 +12,8 @@ export interface WishlistItem {
 interface WishlistContextType {
   items: WishlistItem[];
   addItem: (item: WishlistItem) => void;
-  removeItem: (productId: number) => void;
-  isWishlisted: (productId: number) => boolean;
+  removeItem: (productId: number | string) => void;
+  isWishlisted: (productId: number | string) => boolean;
   toggleWishlist: (item: WishlistItem) => void;
   totalItems: number;
 }
