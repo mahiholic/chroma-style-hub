@@ -14,6 +14,7 @@ import { availableCoupons, type Coupon } from "@/data/products";
 
 const CheckoutPage = () => {
   const { items, totalPrice, clearCart } = useCart();
+  const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [paymentMethod, setPaymentMethod] = useState<"card" | "upi" | "cod">("card");
