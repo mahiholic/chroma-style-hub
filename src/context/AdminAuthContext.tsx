@@ -36,29 +36,50 @@ export const AdminAuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
+    let mounted = true;
+    
+    // Safety timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      if (mounted && loading) setLoading(false);
+    }, 5000);
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (!mounted) return;
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        const admin = await checkAdmin(session.user.id);
-        setIsAdmin(admin);
+        try {
+          const admin = await checkAdmin(session.user.id);
+          if (mounted) setIsAdmin(admin);
+        } catch {
+          if (mounted) setIsAdmin(false);
+        }
       } else {
         setIsAdmin(false);
       }
-      setLoading(false);
+      if (mounted) setLoading(false);
     });
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!mounted) return;
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        const admin = await checkAdmin(session.user.id);
-        setIsAdmin(admin);
+        try {
+          const admin = await checkAdmin(session.user.id);
+          if (mounted) setIsAdmin(admin);
+        } catch {
+          if (mounted) setIsAdmin(false);
+        }
       }
-      setLoading(false);
+      if (mounted) setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
