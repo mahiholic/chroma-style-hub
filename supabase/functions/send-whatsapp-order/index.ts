@@ -38,8 +38,13 @@ Deno.serve(async (req) => {
     const twilioUrl = `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`;
     const authHeader = 'Basic ' + btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
 
+    // Ensure both From and To have the whatsapp: prefix
+    const fromNumber = TWILIO_WHATSAPP_FROM.startsWith('whatsapp:')
+      ? TWILIO_WHATSAPP_FROM
+      : `whatsapp:${TWILIO_WHATSAPP_FROM}`;
+
     const body = new URLSearchParams({
-      From: TWILIO_WHATSAPP_FROM,
+      From: fromNumber,
       To: 'whatsapp:+918595444216',
       Body: message,
     });
