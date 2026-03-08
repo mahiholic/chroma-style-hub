@@ -64,6 +64,15 @@ const ProductDetail = () => {
 
   const wishlisted = isWishlisted(product.id);
   const discount = Math.round((1 - product.price / product.originalPrice) * 100);
+  const displayImage = currentImage || product.image;
+
+  const handleColorSelect = (colorName: string) => {
+    setSelectedColor(colorName);
+    const color = product.colors.find((c) => c.name === colorName);
+    if (color?.image) {
+      setCurrentImage(color.image);
+    }
+  };
 
   const handleAddToCart = () => {
     if (!selectedSize) { toast.error("Please select a size"); return; }
