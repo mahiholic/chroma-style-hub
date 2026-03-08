@@ -23,7 +23,7 @@ const CategoryPage = () => {
   const [sortBy, setSortBy] = useState("popular");
   const [showSort, setShowSort] = useState(false);
 
-  const { data: dbProducts, isLoading } = useDbProducts(cat);
+  const { data: dbProducts } = useDbProducts(cat);
 
   const products = useMemo(() => {
     const rawList = dbProducts && dbProducts.length > 0 ? dbProducts : getProductsByCategory(cat);
