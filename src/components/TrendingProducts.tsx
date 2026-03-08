@@ -7,10 +7,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const TrendingProducts = () => {
   const navigate = useNavigate();
-  const { data: dbProducts, isLoading } = useDbProducts();
+  const { data: dbProducts } = useDbProducts();
 
   // Use DB products if available, fallback to static
   const products = (dbProducts && dbProducts.length > 0 ? dbProducts : allProducts).slice(0, 8);
+  const showSkeleton = false; // Always show fallback products instead of skeletons
 
   return (
     <section className="py-12 bg-background">
