@@ -5,6 +5,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import StoreNavbar from "@/components/StoreNavbar";
 import StoreFooter from "@/components/StoreFooter";
 import { useToast } from "@/hooks/use-toast";
@@ -12,6 +14,7 @@ import { availableCoupons, type Coupon } from "@/data/products";
 
 const CheckoutPage = () => {
   const { items, totalPrice, clearCart } = useCart();
+  const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [paymentMethod, setPaymentMethod] = useState<"card" | "upi" | "cod">("card");
@@ -55,17 +58,62 @@ const CheckoutPage = () => {
     setCouponError("");
   };
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     if (!form.name || !form.email || !form.phone || !form.address || !form.city || !form.pincode) {
       toast({ title: "Missing fields", description: "Please fill in all address fields", variant: "destructive" });
       return;
     }
+    if (!user) {
+      toast({ title: "Please sign in", description: "You need to be signed in to place an order", variant: "destructive" });
+      navigate("/auth");
+      return;
+    }
     setPlacing(true);
-    setTimeout(() => {
+    try {
+      const orderNumber = `DK${Date.now().toString(36).toUpperCase()}`;
+      const shippingAddress = `${form.address}, ${form.city}, ${form.state} - ${form.pincode}`;
+
+      const { data: order, error: orderError } = await supabase
+        .from("orders")
+        .insert({
+          order_number: orderNumber,
+          customer_name: form.name,
+          customer_email: form.email,
+          phone: form.phone,
+          shipping_address: shippingAddress,
+          subtotal: totalPrice,
+          discount: couponDiscount,
+          total,
+          payment_method: paymentMethod,
+          status: "pending",
+          payment_status: paymentMethod === "cod" ? "pending" : "paid",
+        })
+        .select("id")
+        .single();
+
+      if (orderError) throw orderError;
+
+      const orderItems = items.map((item) => ({
+        order_id: order.id,
+        product_name: item.name,
+        product_id: null as string | null,
+        quantity: item.quantity,
+        price: item.price,
+        total: item.price * item.quantity,
+      }));
+
+      const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
+      if (itemsError) throw itemsError;
+
       clearCart();
-      toast({ title: "Order Placed! 🎉", description: "Your order has been placed successfully." });
+      toast({ title: "Order Placed! 🎉", description: `Order ${orderNumber} has been placed successfully.` });
       navigate("/orders");
-    }, 1500);
+    } catch (err: any) {
+      console.error("Order error:", err);
+      toast({ title: "Order failed", description: err?.message || "Something went wrong", variant: "destructive" });
+    } finally {
+      setPlacing(false);
+    }
   };
 
   if (items.length === 0) {
