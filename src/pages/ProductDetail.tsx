@@ -181,6 +181,9 @@ const ProductDetail = () => {
           </motion.div>
         </div>
 
+        {/* Reviews Section */}
+        <ProductReviews productId={product.id} productRating={product.rating} />
+
         {related.length > 0 && (
           <div className="mt-16">
             <h2 className="font-display text-3xl text-foreground mb-6">YOU MAY ALSO LIKE</h2>
