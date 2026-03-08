@@ -47,6 +47,7 @@ export function useDbProducts(category?: string) {
   return useQuery({
     queryKey: ["db-products", category],
     queryFn: async () => {
+      console.log("[useDbProducts] Fetching products, category:", category);
       let q = supabase
         .from("products")
         .select("*")
@@ -56,10 +57,12 @@ export function useDbProducts(category?: string) {
       if (category) q = q.eq("category", category);
 
       const { data, error } = await q;
+      console.log("[useDbProducts] Result:", { data: data?.length, error });
       if (error) throw error;
       return (data || []).map((row, i) => mapDbProduct(row, i));
     },
     staleTime: 60_000,
+    retry: 1,
   });
 }
 
