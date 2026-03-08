@@ -108,7 +108,7 @@ const CategoryPage = () => {
           ))}
         </div>
 
-        {!isLoading && products.length === 0 && (
+        {products.length === 0 && (
           <div className="text-center py-20 text-muted-foreground">
             <p className="font-display text-2xl">No products found</p>
           </div>
