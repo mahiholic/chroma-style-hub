@@ -100,6 +100,9 @@ const CheckoutPage = () => {
         quantity: item.quantity,
         price: item.price,
         total: item.price * item.quantity,
+        image_url: item.image || null,
+        size: item.size || null,
+        color: item.color || null,
       }));
 
       const { error: itemsError } = await supabase.from("order_items").insert(orderItems);

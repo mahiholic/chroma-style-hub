@@ -19,6 +19,7 @@ import ProfilePage from "./pages/ProfilePage";
 import CheckoutPage from "./pages/CheckoutPage";
 import AuthPage from "./pages/AuthPage";
 import OrdersPage from "./pages/OrdersPage";
+import OrderDetailPage from "./pages/OrderDetailPage";
 import AddressesPage from "./pages/AddressesPage";
 import SettingsPage from "./pages/SettingsPage";
 import AdminLoginPage from "./pages/admin/AdminLoginPage";
