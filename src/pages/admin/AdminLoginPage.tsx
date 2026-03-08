@@ -6,12 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAdminAuth } from "@/context/AdminAuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const AdminLoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<"login" | "signup">("login");
   const { toast } = useToast();
   const { user, isAdmin, loading: authLoading, signIn } = useAdminAuth();
 
@@ -32,6 +34,19 @@ const AdminLoginPage = () => {
       return;
     }
     setLoading(true);
+
+    if (mode === "signup") {
+      const { error } = await supabase.auth.signUp({ email, password });
+      if (error) {
+        toast({ title: "Signup failed", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Account created!", description: "You can now sign in. An admin must assign you the admin role." });
+        setMode("login");
+      }
+      setLoading(false);
+      return;
+    }
+
     const { error } = await signIn(email, password);
     setLoading(false);
     if (error) {
@@ -51,9 +66,11 @@ const AdminLoginPage = () => {
             <Shield className="w-7 h-7 text-primary" />
           </div>
         </div>
-        <h1 className="font-display text-3xl text-foreground text-center mb-1">ADMIN LOGIN</h1>
+        <h1 className="font-display text-3xl text-foreground text-center mb-1">
+          {mode === "login" ? "ADMIN LOGIN" : "ADMIN SIGNUP"}
+        </h1>
         <p className="font-body text-sm text-muted-foreground text-center mb-6">
-          Sign in to access the admin dashboard
+          {mode === "login" ? "Sign in to access the admin dashboard" : "Create an account to get started"}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -82,11 +99,21 @@ const AdminLoginPage = () => {
           </div>
 
           <Button type="submit" disabled={loading} className="w-full font-display tracking-wide h-11">
-            {loading ? "SIGNING IN..." : "SIGN IN"}
+            {loading ? (mode === "login" ? "SIGNING IN..." : "CREATING...") : (mode === "login" ? "SIGN IN" : "SIGN UP")}
           </Button>
         </form>
 
-        <div className="mt-6 text-center">
+        <div className="mt-4 text-center">
+          <button
+            type="button"
+            onClick={() => setMode(mode === "login" ? "signup" : "login")}
+            className="font-body text-sm text-primary hover:underline"
+          >
+            {mode === "login" ? "Need an account? Sign up" : "Already have an account? Sign in"}
+          </button>
+        </div>
+
+        <div className="mt-4 text-center">
           <Link to="/" className="font-body text-sm text-muted-foreground hover:text-foreground transition-colors">
             ← Back to Store
           </Link>
