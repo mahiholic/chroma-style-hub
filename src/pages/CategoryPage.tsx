@@ -23,7 +23,7 @@ const CategoryPage = () => {
   const [sortBy, setSortBy] = useState("popular");
   const [showSort, setShowSort] = useState(false);
 
-  const { data: dbProducts, isLoading } = useDbProducts(cat);
+  const { data: dbProducts } = useDbProducts(cat);
 
   const products = useMemo(() => {
     const rawList = dbProducts && dbProducts.length > 0 ? dbProducts : getProductsByCategory(cat);
@@ -102,21 +102,13 @@ const CategoryPage = () => {
           </div>
         </div>
 
-        {isLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="aspect-[3/4] rounded-xl" />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-            {products.map((product, i) => (
-              <ProductCard key={product.id} product={product} index={i} />
-            ))}
-          </div>
-        )}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+          {products.map((product, i) => (
+            <ProductCard key={product.id} product={product} index={i} />
+          ))}
+        </div>
 
-        {!isLoading && products.length === 0 && (
+        {products.length === 0 && (
           <div className="text-center py-20 text-muted-foreground">
             <p className="font-display text-2xl">No products found</p>
           </div>

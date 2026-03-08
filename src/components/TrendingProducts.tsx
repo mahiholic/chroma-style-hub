@@ -7,10 +7,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const TrendingProducts = () => {
   const navigate = useNavigate();
-  const { data: dbProducts, isLoading } = useDbProducts();
+  const { data: dbProducts } = useDbProducts();
 
   // Use DB products if available, fallback to static
   const products = (dbProducts && dbProducts.length > 0 ? dbProducts : allProducts).slice(0, 8);
+  const showSkeleton = false; // Always show fallback products instead of skeletons
 
   return (
     <section className="py-12 bg-background">
@@ -21,7 +22,7 @@ const TrendingProducts = () => {
             View All →
           </button>
         </div>
-        {isLoading ? (
+        {showSkeleton ? (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
               <Skeleton key={i} className="aspect-[3/4] rounded-xl" />
