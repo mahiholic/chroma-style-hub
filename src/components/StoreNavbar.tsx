@@ -6,18 +6,20 @@ import { useWishlist } from "@/context/WishlistContext";
 import { Link, useNavigate } from "react-router-dom";
 
 const menLinks = [
-  { label: "T-Shirts", href: "/category/men" },
-  { label: "Hoodies", href: "/category/men" },
-  { label: "Joggers", href: "/category/men" },
-  { label: "Jackets", href: "/category/men" },
-  { label: "Shorts", href: "/category/men" },
+  { label: "T-Shirts", href: "/category/men?type=tshirt" },
+  { label: "Hoodies", href: "/category/men?type=hoodie" },
+  { label: "Joggers", href: "/category/men?type=jogger" },
+  { label: "Jackets", href: "/category/men?type=jacket" },
+  { label: "Shorts", href: "/category/men?type=shorts" },
+  { label: "View All", href: "/category/men" },
 ];
 const womenLinks = [
-  { label: "Tops", href: "/category/women" },
-  { label: "Dresses", href: "/category/women" },
-  { label: "Skirts", href: "/category/women" },
-  { label: "Jackets", href: "/category/women" },
-  { label: "Pants", href: "/category/women" },
+  { label: "Tops", href: "/category/women?type=top" },
+  { label: "Dresses", href: "/category/women?type=dress" },
+  { label: "Skirts", href: "/category/women?type=skirt" },
+  { label: "Jackets", href: "/category/women?type=jacket" },
+  { label: "Pants", href: "/category/women?type=pants" },
+  { label: "View All", href: "/category/women" },
 ];
 
 const StoreNavbar = () => {
