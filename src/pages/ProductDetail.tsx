@@ -26,6 +26,7 @@ const ProductDetail = () => {
 
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
+  const [currentImage, setCurrentImage] = useState("");
   const [pincode, setPincode] = useState("");
   const [pincodeResult, setPincodeResult] = useState<string | null>(null);
 
