@@ -47,6 +47,7 @@ export function useDbProducts(category?: string) {
   return useQuery({
     queryKey: ["db-products", category],
     queryFn: async () => {
+      console.log("[useDbProducts] SUPABASE_URL:", import.meta.env.VITE_SUPABASE_URL);
       console.log("[useDbProducts] Fetching products, category:", category);
       let q = supabase
         .from("products")
