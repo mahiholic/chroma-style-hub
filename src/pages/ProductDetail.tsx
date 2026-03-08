@@ -213,7 +213,7 @@ const ProductDetail = () => {
                 {product.colors.map((c) => (
                   <button
                     key={c.name}
-                    onClick={() => setSelectedColor(c.name)}
+                    onClick={() => handleColorSelect(c.name)}
                     className={`w-8 h-8 rounded-full border-2 transition-all ${
                       selectedColor === c.name ? "border-foreground scale-110" : "border-border"
                     }`}
