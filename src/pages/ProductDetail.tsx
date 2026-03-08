@@ -3,7 +3,8 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Star, Heart, ShoppingBag, Truck, RotateCcw, Shield, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getProductById, allProducts } from "@/data/products";
+import { allProducts, type Product } from "@/data/products";
+import { useDbProduct, useDbProducts } from "@/hooks/useDbProducts";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import StoreNavbar from "@/components/StoreNavbar";
@@ -17,10 +18,35 @@ const ProductDetail = () => {
   const navigate = useNavigate();
   const { addItem } = useCart();
   const { isWishlisted, toggleWishlist } = useWishlist();
-  const product = getProductById(Number(id));
+
+  // Try static lookup first (numeric IDs)
+  const staticProduct = allProducts.find((p) => String(p.id) === id);
+  
+  // Try DB lookup for UUID-style IDs
+  const { data: dbProduct, isLoading: dbLoading } = useDbProduct(id || "");
+  
+  const product: Product | null | undefined = staticProduct || dbProduct;
 
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
+
+  // Get related products
+  const { data: dbRelated = [] } = useDbProducts(product?.category);
+  const staticRelated = allProducts.filter((p) => p.category === product?.category && String(p.id) !== id).slice(0, 4);
+  const related = dbRelated.length > 0 
+    ? dbRelated.filter((p) => String(p.id) !== id).slice(0, 4) 
+    : staticRelated;
+
+  if (!staticProduct && dbLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <StoreNavbar />
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        </div>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -35,7 +61,6 @@ const ProductDetail = () => {
 
   const wishlisted = isWishlisted(product.id);
   const discount = Math.round((1 - product.price / product.originalPrice) * 100);
-  const related = allProducts.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
 
   const handleAddToCart = () => {
     if (!selectedSize) { toast.error("Please select a size"); return; }
