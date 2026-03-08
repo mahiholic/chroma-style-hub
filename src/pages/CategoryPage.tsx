@@ -5,6 +5,8 @@ import { SlidersHorizontal, ChevronDown } from "lucide-react";
 import StoreNavbar from "@/components/StoreNavbar";
 import StoreFooter from "@/components/StoreFooter";
 import ProductCard from "@/components/ProductCard";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useDbProducts } from "@/hooks/useDbProducts";
 import { getProductsByCategory } from "@/data/products";
 
 const sortOptions = [
@@ -21,8 +23,11 @@ const CategoryPage = () => {
   const [sortBy, setSortBy] = useState("popular");
   const [showSort, setShowSort] = useState(false);
 
+  const { data: dbProducts, isLoading } = useDbProducts(cat);
+
   const products = useMemo(() => {
-    const list = [...getProductsByCategory(cat)];
+    const rawList = dbProducts && dbProducts.length > 0 ? dbProducts : getProductsByCategory(cat);
+    const list = [...rawList];
     switch (sortBy) {
       case "price-asc": return list.sort((a, b) => a.price - b.price);
       case "price-desc": return list.sort((a, b) => b.price - a.price);
@@ -34,7 +39,7 @@ const CategoryPage = () => {
       });
       default: return list;
     }
-  }, [cat, sortBy]);
+  }, [cat, sortBy, dbProducts]);
 
   const titleMap = { men: "MEN'S COLLECTION", women: "WOMEN'S COLLECTION", accessories: "ACCESSORIES" };
   const title = titleMap[cat];
@@ -97,13 +102,21 @@ const CategoryPage = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {products.map((product, i) => (
-            <ProductCard key={product.id} product={product} index={i} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} className="aspect-[3/4] rounded-xl" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {products.map((product, i) => (
+              <ProductCard key={product.id} product={product} index={i} />
+            ))}
+          </div>
+        )}
 
-        {products.length === 0 && (
+        {!isLoading && products.length === 0 && (
           <div className="text-center py-20 text-muted-foreground">
             <p className="font-display text-2xl">No products found</p>
           </div>
