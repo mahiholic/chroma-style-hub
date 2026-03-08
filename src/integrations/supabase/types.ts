@@ -64,30 +64,39 @@ export type Database = {
       }
       order_items: {
         Row: {
+          color: string | null
           id: string
+          image_url: string | null
           order_id: string
           price: number
           product_id: string | null
           product_name: string
           quantity: number
+          size: string | null
           total: number
         }
         Insert: {
+          color?: string | null
           id?: string
+          image_url?: string | null
           order_id: string
           price?: number
           product_id?: string | null
           product_name: string
           quantity?: number
+          size?: string | null
           total?: number
         }
         Update: {
+          color?: string | null
           id?: string
+          image_url?: string | null
           order_id?: string
           price?: number
           product_id?: string | null
           product_name?: string
           quantity?: number
+          size?: string | null
           total?: number
         }
         Relationships: [
@@ -107,12 +116,52 @@ export type Database = {
           },
         ]
       }
+      order_reviews: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          order_id: string
+          product_id: string
+          rating: number
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          order_id: string
+          product_id: string
+          rating: number
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          order_id?: string
+          product_id?: string
+          rating?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_reviews_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orders: {
         Row: {
+          cancel_reason: string | null
           created_at: string
           customer_email: string
           customer_id: string | null
           customer_name: string
+          delivery_date: string | null
           discount: number
           id: string
           notes: string | null
@@ -120,6 +169,8 @@ export type Database = {
           payment_method: string | null
           payment_status: string
           phone: string | null
+          return_reason: string | null
+          return_requested_at: string | null
           shipping_address: string | null
           status: string
           subtotal: number
@@ -127,10 +178,12 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cancel_reason?: string | null
           created_at?: string
           customer_email: string
           customer_id?: string | null
           customer_name: string
+          delivery_date?: string | null
           discount?: number
           id?: string
           notes?: string | null
@@ -138,6 +191,8 @@ export type Database = {
           payment_method?: string | null
           payment_status?: string
           phone?: string | null
+          return_reason?: string | null
+          return_requested_at?: string | null
           shipping_address?: string | null
           status?: string
           subtotal?: number
@@ -145,10 +200,12 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cancel_reason?: string | null
           created_at?: string
           customer_email?: string
           customer_id?: string | null
           customer_name?: string
+          delivery_date?: string | null
           discount?: number
           id?: string
           notes?: string | null
@@ -156,6 +213,8 @@ export type Database = {
           payment_method?: string | null
           payment_status?: string
           phone?: string | null
+          return_reason?: string | null
+          return_requested_at?: string | null
           shipping_address?: string | null
           status?: string
           subtotal?: number
