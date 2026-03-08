@@ -43,15 +43,6 @@ function mapDbProduct(row: any, index: number): Product {
   };
 }
 
-async function fetchWithTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error("Supabase query timeout")), ms)
-    ),
-  ]);
-}
-
 export function useDbProducts(category?: string) {
   return useQuery({
     queryKey: ["db-products", category],
@@ -64,9 +55,16 @@ export function useDbProducts(category?: string) {
 
       if (category) q = q.eq("category", category);
 
-      const { data, error } = await fetchWithTimeout(q, 8000);
-      if (error) throw error;
-      return (data || []).map((row, i) => mapDbProduct(row, i));
+      // Wrap in a real Promise with timeout to avoid hanging
+      const result = await Promise.race([
+        q.then(res => res),
+        new Promise<{ data: null; error: Error }>((resolve) =>
+          setTimeout(() => resolve({ data: null, error: new Error("Query timeout") }), 8000)
+        ),
+      ]);
+
+      if (result.error) throw result.error;
+      return (result.data || []).map((row: any, i: number) => mapDbProduct(row, i));
     },
     staleTime: 60_000,
     retry: 1,
@@ -78,17 +76,21 @@ export function useDbProduct(id: string) {
   return useQuery({
     queryKey: ["db-product", id],
     queryFn: async () => {
-      const { data, error } = await fetchWithTimeout(
+      const result = await Promise.race([
         supabase
           .from("products")
           .select("*")
           .eq("id", id)
-          .maybeSingle(),
-        8000
-      );
-      if (error) throw error;
-      if (!data) return null;
-      return mapDbProduct(data, 0);
+          .maybeSingle()
+          .then(res => res),
+        new Promise<{ data: null; error: Error }>((resolve) =>
+          setTimeout(() => resolve({ data: null, error: new Error("Query timeout") }), 8000)
+        ),
+      ]);
+
+      if (result.error) throw result.error;
+      if (!result.data) return null;
+      return mapDbProduct(result.data, 0);
     },
     staleTime: 60_000,
     retry: 1,
