@@ -30,7 +30,7 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
   }, []);
 
-  const removeItem = useCallback((productId: number) => {
+  const removeItem = useCallback((productId: number | string) => {
     setItems((prev) => prev.filter((i) => i.productId !== productId));
   }, []);
 
