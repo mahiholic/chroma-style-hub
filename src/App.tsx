@@ -30,8 +30,8 @@ const App = () => (
         <WishlistProvider>
           <Toaster />
           <Sonner />
-          <CartDrawer />
           <BrowserRouter>
+            <CartDrawer />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/product/:id" element={<ProductDetail />} />
