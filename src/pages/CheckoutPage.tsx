@@ -126,8 +126,23 @@ const CheckoutPage = () => {
       const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
       if (itemsError) throw itemsError;
 
+      // Send WhatsApp notification
+      const itemsList = items.map((i) => `${i.name} (x${i.quantity}) - ₹${i.price * i.quantity}`).join("\n");
+      const whatsappMsg = encodeURIComponent(
+        `🛒 *New Order Placed!*\n\n` +
+        `*Order:* ${orderNumber}\n` +
+        `*Customer:* ${form.name}\n` +
+        `*Phone:* ${form.phone}\n` +
+        `*Email:* ${form.email}\n` +
+        `*Address:* ${shippingAddress}\n` +
+        `*Payment:* ${paymentMethod.toUpperCase()}\n\n` +
+        `*Items:*\n${itemsList}\n\n` +
+        `*Total:* ₹${total}`
+      );
+      window.open(`https://wa.me/918595444216?text=${whatsappMsg}`, "_blank");
+
       clearCart();
-      toast({ title: "Order Placed! 🎉", description: `Order ${orderNumber} has been placed successfully.` });
+      toast({ title: "Order Placed! 🎉", description: `Order ${orderNumber} has been placed successfully. Your order has been confirmed!` });
       navigate("/orders");
     } catch (err: any) {
       console.error("Order error:", err);
