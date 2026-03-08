@@ -37,9 +37,10 @@ const App = () => (
     <TooltipProvider>
       <CartProvider>
         <WishlistProvider>
-          <AdminAuthProvider>
-            <Toaster />
-            <Sonner />
+          <AuthProvider>
+            <AdminAuthProvider>
+              <Toaster />
+              <Sonner />
             <BrowserRouter>
               <CartDrawer />
               <Routes>
