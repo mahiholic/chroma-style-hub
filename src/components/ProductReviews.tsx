@@ -8,7 +8,7 @@ import { getProductReviews, type Review } from "@/data/products";
 import { toast } from "sonner";
 
 interface ProductReviewsProps {
-  productId: number;
+  productId: number | string;
   productRating: number;
 }
 

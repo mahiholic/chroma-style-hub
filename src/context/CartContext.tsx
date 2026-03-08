@@ -49,7 +49,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setItems((prev) => prev.filter((i) => !(i.productId === productId && i.size === size && i.color === color)));
   }, []);
 
-  const updateQuantity = useCallback((productId: number, size: string, color: string, qty: number) => {
+  const updateQuantity = useCallback((productId: number | string, size: string, color: string, qty: number) => {
     if (qty <= 0) {
       removeItem(productId, size, color);
       return;
