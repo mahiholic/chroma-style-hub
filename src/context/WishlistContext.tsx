@@ -34,7 +34,7 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setItems((prev) => prev.filter((i) => i.productId !== productId));
   }, []);
 
-  const isWishlisted = useCallback((productId: number) => {
+  const isWishlisted = useCallback((productId: number | string) => {
     return items.some((i) => i.productId === productId);
   }, [items]);
 
