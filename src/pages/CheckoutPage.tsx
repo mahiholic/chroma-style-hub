@@ -26,12 +26,24 @@ const CheckoutPage = () => {
 
   const shipping = totalPrice > 999 ? 0 : 99;
 
-  const couponDiscount = appliedCoupon
-    ? appliedCoupon.type === "percentage"
-      ? Math.round(totalPrice * appliedCoupon.value / 100)
-      : appliedCoupon.value
-    : 0;
+  const calculateCouponDiscount = () => {
+    if (!appliedCoupon) return 0;
+    if (appliedCoupon.type === "percentage") return Math.round(totalPrice * appliedCoupon.value / 100);
+    if (appliedCoupon.type === "flat") return appliedCoupon.value;
+    if (appliedCoupon.type === "buy2get1") {
+      const totalQty = items.reduce((sum, i) => sum + i.quantity, 0);
+      if (totalQty < 3) return 0;
+      // Cheapest item(s) free for every 3 items
+      const unitPrices: number[] = [];
+      items.forEach((item) => { for (let i = 0; i < item.quantity; i++) unitPrices.push(item.price); });
+      unitPrices.sort((a, b) => a - b);
+      const freeCount = Math.floor(unitPrices.length / 3);
+      return unitPrices.slice(0, freeCount).reduce((s, p) => s + p, 0);
+    }
+    return 0;
+  };
 
+  const couponDiscount = calculateCouponDiscount();
   const total = totalPrice + shipping - couponDiscount;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [e.target.name]: e.target.value });
