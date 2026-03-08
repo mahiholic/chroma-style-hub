@@ -1,8 +1,9 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Star, Heart, ShoppingBag, Truck, RotateCcw, Shield, ChevronLeft } from "lucide-react";
+import { Star, Heart, ShoppingBag, Truck, RotateCcw, Shield, ChevronLeft, MapPin, Tag, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { allProducts, type Product } from "@/data/products";
 import { useDbProduct, useDbProducts } from "@/hooks/useDbProducts";
 import { useCart } from "@/context/CartContext";
@@ -19,22 +20,19 @@ const ProductDetail = () => {
   const { addItem } = useCart();
   const { isWishlisted, toggleWishlist } = useWishlist();
 
-  // Try static lookup first (numeric IDs)
   const staticProduct = allProducts.find((p) => String(p.id) === id);
-  
-  // Try DB lookup for UUID-style IDs
   const { data: dbProduct, isLoading: dbLoading } = useDbProduct(id || "");
-  
   const product: Product | null | undefined = staticProduct || dbProduct;
 
   const [selectedSize, setSelectedSize] = useState("");
   const [selectedColor, setSelectedColor] = useState("");
+  const [pincode, setPincode] = useState("");
+  const [pincodeResult, setPincodeResult] = useState<string | null>(null);
 
-  // Get related products
   const { data: dbRelated = [] } = useDbProducts(product?.category);
   const staticRelated = allProducts.filter((p) => p.category === product?.category && String(p.id) !== id).slice(0, 4);
-  const related = dbRelated.length > 0 
-    ? dbRelated.filter((p) => String(p.id) !== id).slice(0, 4) 
+  const related = dbRelated.length > 0
+    ? dbRelated.filter((p) => String(p.id) !== id).slice(0, 4)
     : staticRelated;
 
   if (!staticProduct && dbLoading) {
@@ -50,11 +48,15 @@ const ProductDetail = () => {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="font-display text-4xl text-foreground mb-4">Product Not Found</h1>
-          <Button onClick={() => navigate("/")} className="bg-primary text-primary-foreground">Go Home</Button>
+      <div className="min-h-screen bg-background">
+        <StoreNavbar />
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <h1 className="font-display text-4xl text-foreground mb-4">Product Not Found</h1>
+            <Button onClick={() => navigate("/")} className="bg-primary text-primary-foreground font-display">Go Home</Button>
+          </div>
         </div>
+        <StoreFooter />
       </div>
     );
   }
@@ -88,58 +90,108 @@ const ProductDetail = () => {
     toast(wishlisted ? "Removed from wishlist" : "Added to wishlist ❤️");
   };
 
+  const handlePincodeCheck = () => {
+    if (pincode.length === 6) {
+      setPincodeResult("Delivery available! Expected by " + new Date(Date.now() + 5 * 86400000).toLocaleDateString("en-IN", { day: "numeric", month: "short" }));
+    } else {
+      setPincodeResult("Please enter a valid 6-digit pincode");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <StoreNavbar />
 
-      <div className="container mx-auto px-4 py-6">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted-foreground hover:text-foreground mb-6 font-body text-sm transition-colors">
-          <ChevronLeft className="w-4 h-4" /> Back
-        </button>
+      {/* Breadcrumb */}
+      <div className="bg-card border-b border-border">
+        <div className="container mx-auto px-4 py-2">
+          <div className="flex items-center gap-2 font-body text-xs text-muted-foreground">
+            <Link to="/" className="hover:text-primary">Home</Link>
+            <span>›</span>
+            <Link to={`/category/${product.category}`} className="hover:text-primary capitalize">{product.category}</Link>
+            <span>›</span>
+            <span className="text-foreground font-semibold truncate max-w-[200px]">{product.name}</span>
+          </div>
+        </div>
+      </div>
 
-        <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
-          <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} className="relative rounded-2xl overflow-hidden bg-muted aspect-[3/4]">
-            <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-            <span className={`absolute top-4 left-4 ${product.tagColor} text-card text-xs font-bold px-3 py-1.5 rounded-full tracking-wider`}>
-              {product.tag}
-            </span>
-            <button
-              onClick={handleWishlist}
-              className={`absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center transition-colors ${
-                wishlisted ? "bg-secondary text-secondary-foreground" : "bg-card/80 backdrop-blur-sm hover:bg-secondary hover:text-secondary-foreground"
-              }`}
-            >
-              <Heart className={`w-5 h-5 ${wishlisted ? "fill-current" : ""}`} />
-            </button>
+      <div className="container mx-auto px-4 py-6">
+        <div className="grid md:grid-cols-2 gap-6 lg:gap-10">
+          {/* Left: Product Image */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
+            <div className="relative rounded-lg overflow-hidden bg-muted aspect-[3/4]">
+              <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+              <button
+                onClick={handleWishlist}
+                className={`absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center transition-colors shadow-sm ${
+                  wishlisted ? "bg-secondary text-secondary-foreground" : "bg-card text-muted-foreground hover:text-secondary"
+                }`}
+              >
+                <Heart className={`w-5 h-5 ${wishlisted ? "fill-current" : ""}`} />
+              </button>
+            </div>
+            {/* Thumbnail strip (mock multiple views) */}
+            <div className="flex gap-2">
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className={`w-16 h-20 rounded border-2 overflow-hidden cursor-pointer ${i === 0 ? "border-primary" : "border-border hover:border-foreground"}`}>
+                  <img src={product.image} alt="" className="w-full h-full object-cover opacity-90" />
+                </div>
+              ))}
+            </div>
           </motion.div>
 
-          <motion.div initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col">
-            <span className="text-xs font-bold text-accent uppercase tracking-widest">{product.category}'s Collection</span>
-            <h1 className="font-display text-3xl md:text-4xl text-foreground mt-2">{product.name}</h1>
+          {/* Right: Product Info */}
+          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col">
+            {/* Brand */}
+            <p className="font-body text-sm font-bold text-muted-foreground uppercase tracking-wider">DRIPKART</p>
+            <h1 className="font-body text-xl md:text-2xl font-medium text-foreground mt-1 leading-snug">{product.name}</h1>
 
-            <div className="flex items-center gap-2 mt-3">
-              <div className="flex items-center gap-1 bg-success/10 px-2.5 py-1 rounded-full">
-                <Star className="w-4 h-4 fill-success text-success" />
-                <span className="text-sm font-semibold text-success">{product.rating}</span>
+            {/* Rating */}
+            <div className="flex items-center gap-2 mt-2">
+              <div className="flex items-center gap-1 bg-success/10 px-2 py-0.5 rounded">
+                <Star className="w-3.5 h-3.5 fill-success text-success" />
+                <span className="text-xs font-bold text-success">{product.rating}</span>
               </div>
-              <span className="text-sm text-muted-foreground">• 2.1k ratings</span>
+              <span className="text-xs text-muted-foreground">2.1k Ratings</span>
             </div>
 
-            <div className="flex items-baseline gap-3 mt-5">
-              <span className="font-display text-4xl text-foreground">₹{product.price}</span>
-              <span className="font-body text-lg text-muted-foreground line-through">₹{product.originalPrice}</span>
-              <span className="text-sm font-bold text-success bg-success/10 px-2 py-0.5 rounded-full">{discount}% OFF</span>
+            {/* Price */}
+            <div className="mt-4 pb-4 border-b border-border">
+              <div className="flex items-baseline gap-2">
+                <span className="font-body text-2xl font-bold text-foreground">₹{product.price}</span>
+                <span className="font-body text-base text-muted-foreground line-through">₹{product.originalPrice}</span>
+                <span className="font-body text-sm font-bold text-green-600">{discount}% OFF</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">inclusive of all taxes</p>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">Inclusive of all taxes</p>
 
-            <div className="mt-6">
-              <p className="font-body font-semibold text-sm text-foreground mb-3">COLOR: {selectedColor}</p>
-              <div className="flex gap-3">
+            {/* Offers */}
+            <div className="mt-4 space-y-2">
+              <p className="font-body text-sm font-bold text-foreground flex items-center gap-1.5">
+                <Tag className="w-4 h-4 text-primary" /> Offers
+              </p>
+              <div className="flex gap-2 overflow-x-auto pb-1">
+                {["Buy 2 for ₹1199", "Buy 3 for ₹1499", "Use code DRIP10"].map((offer) => (
+                  <span key={offer} className="shrink-0 px-3 py-1.5 rounded border border-dashed border-primary/50 font-body text-xs text-foreground bg-primary/5">
+                    {offer}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Color */}
+            <div className="mt-5">
+              <p className="font-body text-sm font-bold text-foreground mb-2">
+                Color: <span className="font-normal text-muted-foreground">{selectedColor || "Select"}</span>
+              </p>
+              <div className="flex gap-2">
                 {product.colors.map((c) => (
                   <button
                     key={c.name}
                     onClick={() => setSelectedColor(c.name)}
-                    className={`w-9 h-9 rounded-full border-2 transition-all ${selectedColor === c.name ? "border-primary scale-110 shadow-glow" : "border-border"}`}
+                    className={`w-8 h-8 rounded-full border-2 transition-all ${
+                      selectedColor === c.name ? "border-foreground scale-110" : "border-border"
+                    }`}
                     style={{ backgroundColor: c.hex }}
                     title={c.name}
                   />
@@ -147,17 +199,21 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            <div className="mt-6">
-              <p className="font-body font-semibold text-sm text-foreground mb-3">SELECT SIZE</p>
+            {/* Size */}
+            <div className="mt-5">
+              <div className="flex items-center justify-between mb-2">
+                <p className="font-body text-sm font-bold text-foreground">Select Size</p>
+                <button className="font-body text-xs font-bold text-primary hover:underline">SIZE GUIDE</button>
+              </div>
               <div className="flex flex-wrap gap-2">
                 {product.sizes.map((s) => (
                   <button
                     key={s}
                     onClick={() => setSelectedSize(s)}
-                    className={`w-12 h-12 rounded-xl font-body font-semibold text-sm border-2 transition-all ${
+                    className={`min-w-[44px] h-10 px-3 rounded-md font-body text-sm font-semibold border transition-all ${
                       selectedSize === s
-                        ? "border-primary bg-primary text-primary-foreground shadow-glow"
-                        : "border-border bg-card text-foreground hover:border-primary/50"
+                        ? "border-foreground bg-foreground text-card"
+                        : "border-border text-foreground hover:border-foreground"
                     }`}
                   >
                     {s}
@@ -166,53 +222,85 @@ const ProductDetail = () => {
               </div>
             </div>
 
-            <div className="flex gap-3 mt-8">
+            {/* Action Buttons */}
+            <div className="flex gap-3 mt-6">
               <Button
                 onClick={handleAddToCart}
-                className="flex-1 h-14 bg-primary text-primary-foreground font-display text-xl tracking-wide hover:bg-primary/90 gap-2"
+                className="flex-1 h-12 bg-primary text-primary-foreground font-body text-sm font-bold tracking-wide hover:bg-primary/90 gap-2 rounded-md"
               >
-                <ShoppingBag className="w-5 h-5" /> ADD TO BAG
+                <ShoppingBag className="w-4 h-4" /> ADD TO BAG
               </Button>
               <Button
                 variant="outline"
                 onClick={handleWishlist}
-                className={`h-14 px-6 border-2 transition-colors ${
+                className={`h-12 px-6 font-body text-sm font-bold gap-2 rounded-md ${
                   wishlisted
-                    ? "border-secondary bg-secondary text-secondary-foreground"
-                    : "border-secondary text-secondary hover:bg-secondary hover:text-secondary-foreground"
+                    ? "border-secondary text-secondary bg-secondary/5"
+                    : "border-border text-foreground hover:border-foreground"
                 }`}
               >
-                <Heart className={`w-5 h-5 ${wishlisted ? "fill-current" : ""}`} />
+                <Heart className={`w-4 h-4 ${wishlisted ? "fill-secondary text-secondary" : ""}`} />
+                WISHLIST
               </Button>
             </div>
 
-            <div className="mt-8 p-5 bg-card rounded-xl border border-border">
-              <h3 className="font-display text-xl text-foreground mb-2">PRODUCT DETAILS</h3>
-              <p className="font-body text-sm text-muted-foreground leading-relaxed">{product.description}</p>
+            {/* Delivery Check */}
+            <div className="mt-6 pt-4 border-t border-border">
+              <p className="font-body text-sm font-bold text-foreground flex items-center gap-1.5 mb-2">
+                <MapPin className="w-4 h-4" /> Check Delivery
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  placeholder="Enter pincode"
+                  value={pincode}
+                  onChange={(e) => { setPincode(e.target.value.replace(/\D/g, "").slice(0, 6)); setPincodeResult(null); }}
+                  className="w-36 font-body text-sm h-9"
+                  maxLength={6}
+                />
+                <Button variant="outline" onClick={handlePincodeCheck} className="h-9 font-body text-sm font-bold">
+                  CHECK
+                </Button>
+              </div>
+              {pincodeResult && (
+                <p className={`font-body text-xs mt-1.5 ${pincodeResult.includes("available") ? "text-green-600" : "text-destructive"}`}>
+                  {pincodeResult.includes("available") && <Check className="w-3 h-3 inline mr-1" />}
+                  {pincodeResult}
+                </p>
+              )}
             </div>
 
-            <div className="grid grid-cols-3 gap-3 mt-6">
+            {/* Features */}
+            <div className="grid grid-cols-3 gap-3 mt-6 pt-4 border-t border-border">
               {[
-                { icon: Truck, label: "Free Delivery" },
-                { icon: RotateCcw, label: "15 Day Returns" },
-                { icon: Shield, label: "Secure Payment" },
-              ].map(({ icon: Icon, label }) => (
-                <div key={label} className="flex flex-col items-center gap-1.5 p-3 bg-card rounded-xl border border-border">
-                  <Icon className="w-5 h-5 text-accent" />
-                  <span className="text-xs font-semibold text-muted-foreground">{label}</span>
+                { icon: Truck, label: "Free Delivery", desc: "Above ₹399" },
+                { icon: RotateCcw, label: "15 Day Returns", desc: "Easy returns" },
+                { icon: Shield, label: "100% Secure", desc: "Payment" },
+              ].map(({ icon: Icon, label, desc }) => (
+                <div key={label} className="flex flex-col items-center gap-1 text-center">
+                  <Icon className="w-5 h-5 text-muted-foreground" />
+                  <span className="text-xs font-bold text-foreground">{label}</span>
+                  <span className="text-[10px] text-muted-foreground">{desc}</span>
                 </div>
               ))}
+            </div>
+
+            {/* Description */}
+            <div className="mt-6 pt-4 border-t border-border">
+              <h3 className="font-body text-sm font-bold text-foreground mb-2">Product Description</h3>
+              <p className="font-body text-sm text-muted-foreground leading-relaxed">{product.description}</p>
             </div>
           </motion.div>
         </div>
 
-        {/* Reviews Section */}
+        {/* Reviews */}
         <ProductReviews productId={product.id} productRating={product.rating} />
 
+        {/* Related */}
         {related.length > 0 && (
-          <div className="mt-16">
-            <h2 className="font-display text-3xl text-foreground mb-6">YOU MAY ALSO LIKE</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="mt-12">
+            <h2 className="font-display text-2xl text-foreground mb-6">YOU MAY ALSO LIKE</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
               {related.map((p, i) => (
                 <ProductCard key={p.id} product={p} index={i} />
               ))}
