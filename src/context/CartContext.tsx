@@ -45,7 +45,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsOpen(true);
   }, []);
 
-  const removeItem = useCallback((productId: number, size: string, color: string) => {
+  const removeItem = useCallback((productId: number | string, size: string, color: string) => {
     setItems((prev) => prev.filter((i) => !(i.productId === productId && i.size === size && i.color === color)));
   }, []);
 
