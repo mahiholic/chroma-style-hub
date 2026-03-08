@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { AdminLayout } from "@/components/admin/AdminLayout";
-import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const CATEGORIES = ["men", "women", "accessories", "general"];
@@ -20,6 +20,9 @@ const AdminProductsPage = () => {
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState(emptyProduct);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   const fetchProducts = async () => {
@@ -31,11 +34,45 @@ const AdminProductsPage = () => {
 
   useEffect(() => { fetchProducts(); }, [search]);
 
-  const openNew = () => { setEditing(null); setForm(emptyProduct); setDialogOpen(true); };
+  const openNew = () => { setEditing(null); setForm(emptyProduct); setImagePreview(null); setDialogOpen(true); };
   const openEdit = (p: any) => {
     setEditing(p);
     setForm({ name: p.name, description: p.description || "", price: p.price, original_price: p.original_price || 0, category: p.category, image_url: p.image_url || "", stock: p.stock, is_active: p.is_active });
+    setImagePreview(p.image_url || null);
     setDialogOpen(true);
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast({ title: "Invalid file", description: "Please select an image file", variant: "destructive" });
+      return;
+    }
+
+    setUploading(true);
+    const ext = file.name.split(".").pop();
+    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
+
+    const { error } = await supabase.storage.from("product-images").upload(fileName, file);
+    if (error) {
+      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+      setUploading(false);
+      return;
+    }
+
+    const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(fileName);
+    setForm({ ...form, image_url: urlData.publicUrl });
+    setImagePreview(urlData.publicUrl);
+    setUploading(false);
+    toast({ title: "Image uploaded" });
+  };
+
+  const removeImage = () => {
+    setForm({ ...form, image_url: "" });
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const handleSave = async () => {
@@ -132,7 +169,34 @@ const AdminProductsPage = () => {
                   {CATEGORIES.map((c) => <SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <Input placeholder="Image URL" value={form.image_url} onChange={(e) => setForm({ ...form, image_url: e.target.value })} />
+
+              {/* Image Upload */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Product Image</label>
+                {imagePreview ? (
+                  <div className="relative rounded-lg overflow-hidden border border-border">
+                    <img src={imagePreview} alt="Preview" className="w-full h-40 object-cover" />
+                    <button
+                      type="button"
+                      onClick={removeImage}
+                      className="absolute top-2 right-2 p-1 rounded-full bg-background/80 hover:bg-background text-foreground"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 transition-colors"
+                  >
+                    <Upload className="w-6 h-6 text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground">{uploading ? "Uploading..." : "Click to upload image"}</p>
+                  </div>
+                )}
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
+                <Input placeholder="Or paste image URL" value={form.image_url} onChange={(e) => { setForm({ ...form, image_url: e.target.value }); setImagePreview(e.target.value || null); }} className="text-xs" />
+              </div>
+
               <Input type="number" placeholder="Stock" value={form.stock} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} />
               <div className="flex items-center gap-2">
                 <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />
