@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Mail, Lock, User, Eye, EyeOff, ArrowLeft } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
 import StoreNavbar from "@/components/StoreNavbar";
 import StoreFooter from "@/components/StoreFooter";
 
@@ -14,23 +15,47 @@ const AuthPage = () => {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
+  const { user, loading: authLoading, signIn, signUp } = useAuth();
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
+
+  if (user) return <Navigate to="/profile" replace />;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [e.target.name]: e.target.value });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.email || !form.password || (mode === "signup" && !form.name)) {
       toast({ title: "Missing fields", description: "Please fill in all fields", variant: "destructive" });
       return;
     }
     setLoading(true);
-    setTimeout(() => {
+
+    if (mode === "signup") {
+      const { error } = await signUp(form.email, form.password, form.name);
       setLoading(false);
-      localStorage.setItem("dripkart_user", JSON.stringify({ name: form.name || "User", email: form.email }));
-      toast({ title: mode === "login" ? "Welcome back! 👋" : "Account created! 🎉", description: `Signed in as ${form.email}` });
-      navigate("/profile");
-    }, 1000);
+      if (error) {
+        toast({ title: "Signup failed", description: error, variant: "destructive" });
+      } else {
+        toast({ title: "Account created! 🎉", description: "Please check your email to verify your account before signing in." });
+        setMode("login");
+      }
+      return;
+    }
+
+    const { error } = await signIn(form.email, form.password);
+    setLoading(false);
+    if (error) {
+      toast({ title: "Login failed", description: error, variant: "destructive" });
+    } else {
+      toast({ title: "Welcome back! 👋", description: `Signed in as ${form.email}` });
+    }
   };
 
   return (
@@ -67,12 +92,6 @@ const AuthPage = () => {
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-
-            {mode === "login" && (
-              <p className="text-right">
-                <button type="button" className="font-body text-xs text-primary hover:underline">Forgot Password?</button>
-              </p>
-            )}
 
             <Button type="submit" disabled={loading} className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-display tracking-wide h-11">
               {loading ? "PLEASE WAIT..." : mode === "login" ? "SIGN IN" : "CREATE ACCOUNT"}

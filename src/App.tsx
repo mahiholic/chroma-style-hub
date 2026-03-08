@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "@/context/CartContext";
 import { WishlistProvider } from "@/context/WishlistContext";
+import { AuthProvider } from "@/context/AuthContext";
 import { AdminAuthProvider } from "@/context/AdminAuthContext";
 import CartDrawer from "@/components/CartDrawer";
 import Index from "./pages/Index";
@@ -36,9 +37,10 @@ const App = () => (
     <TooltipProvider>
       <CartProvider>
         <WishlistProvider>
-          <AdminAuthProvider>
-            <Toaster />
-            <Sonner />
+          <AuthProvider>
+            <AdminAuthProvider>
+              <Toaster />
+              <Sonner />
             <BrowserRouter>
               <CartDrawer />
               <Routes>
@@ -70,6 +72,7 @@ const App = () => (
               </Routes>
             </BrowserRouter>
           </AdminAuthProvider>
+          </AuthProvider>
         </WishlistProvider>
       </CartProvider>
     </TooltipProvider>

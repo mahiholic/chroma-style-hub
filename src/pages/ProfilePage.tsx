@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { User, ShoppingBag, Heart, MapPin, Settings, LogIn, LogOut, Package } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
+import { useAuth } from "@/context/AuthContext";
 import StoreNavbar from "@/components/StoreNavbar";
 import StoreFooter from "@/components/StoreFooter";
 import { useToast } from "@/hooks/use-toast";
@@ -21,18 +21,25 @@ const ProfilePage = () => {
   const { totalItems: wishlistCount } = useWishlist();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
+  const { user, loading, signOut } = useAuth();
 
-  useEffect(() => {
-    const stored = localStorage.getItem("dripkart_user");
-    if (stored) setUser(JSON.parse(stored));
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem("dripkart_user");
-    setUser(null);
+  const handleLogout = async () => {
+    await signOut();
     toast({ title: "Logged out successfully" });
   };
+
+  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "User";
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <StoreNavbar />
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -44,7 +51,7 @@ const ProfilePage = () => {
               <User className="w-8 h-8 text-primary" />
             </div>
             <div>
-              <h1 className="font-display text-2xl text-foreground">{user ? user.name.toUpperCase() : "GUEST USER"}</h1>
+              <h1 className="font-display text-2xl text-foreground">{user ? displayName.toUpperCase() : "GUEST USER"}</h1>
               <p className="font-body text-sm text-muted-foreground">{user ? user.email : "Sign in to access your account"}</p>
             </div>
           </div>
