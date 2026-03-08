@@ -43,12 +43,19 @@ function mapDbProduct(row: any, index: number): Product {
   };
 }
 
+async function fetchWithTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Supabase query timeout")), ms)
+    ),
+  ]);
+}
+
 export function useDbProducts(category?: string) {
   return useQuery({
     queryKey: ["db-products", category],
     queryFn: async () => {
-      console.log("[useDbProducts] SUPABASE_URL:", import.meta.env.VITE_SUPABASE_URL);
-      console.log("[useDbProducts] Fetching products, category:", category);
       let q = supabase
         .from("products")
         .select("*")
@@ -57,13 +64,13 @@ export function useDbProducts(category?: string) {
 
       if (category) q = q.eq("category", category);
 
-      const { data, error } = await q;
-      console.log("[useDbProducts] Result:", { data: data?.length, error });
+      const { data, error } = await fetchWithTimeout(q, 8000);
       if (error) throw error;
       return (data || []).map((row, i) => mapDbProduct(row, i));
     },
     staleTime: 60_000,
     retry: 1,
+    retryDelay: 1000,
   });
 }
 
@@ -71,15 +78,19 @@ export function useDbProduct(id: string) {
   return useQuery({
     queryKey: ["db-product", id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .eq("id", id)
-        .maybeSingle();
+      const { data, error } = await fetchWithTimeout(
+        supabase
+          .from("products")
+          .select("*")
+          .eq("id", id)
+          .maybeSingle(),
+        8000
+      );
       if (error) throw error;
       if (!data) return null;
       return mapDbProduct(data, 0);
     },
     staleTime: 60_000,
+    retry: 1,
   });
 }
