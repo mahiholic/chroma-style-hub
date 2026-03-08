@@ -9,6 +9,7 @@ import { useWishlist } from "@/context/WishlistContext";
 import StoreNavbar from "@/components/StoreNavbar";
 import StoreFooter from "@/components/StoreFooter";
 import ProductCard from "@/components/ProductCard";
+import ProductReviews from "@/components/ProductReviews";
 import { toast } from "sonner";
 
 const ProductDetail = () => {
