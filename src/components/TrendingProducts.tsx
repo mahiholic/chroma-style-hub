@@ -22,7 +22,7 @@ const TrendingProducts = () => {
             View All →
           </button>
         </div>
-        {isLoading && (!dbProducts || dbProducts.length === 0) ? (
+        {showSkeleton ? (
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
               <Skeleton key={i} className="aspect-[3/4] rounded-xl" />
