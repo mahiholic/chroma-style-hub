@@ -1,11 +1,10 @@
 import { useState, useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { SlidersHorizontal, ChevronDown } from "lucide-react";
+import { SlidersHorizontal, ChevronDown, X } from "lucide-react";
 import StoreNavbar from "@/components/StoreNavbar";
 import StoreFooter from "@/components/StoreFooter";
 import ProductCard from "@/components/ProductCard";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useDbProducts } from "@/hooks/useDbProducts";
 import { getProductsByCategory } from "@/data/products";
 
@@ -17,8 +16,35 @@ const sortOptions = [
   { label: "Discount", value: "discount" },
 ];
 
+// Map URL type param to product name keywords for filtering
+const typeKeywords: Record<string, string[]> = {
+  tshirt: ["tee", "t-shirt", "tshirt", "crew neck", "tank", "polo"],
+  hoodie: ["hoodie", "hoodie", "sweatshirt", "crew neck"],
+  jogger: ["jogger", "track pants", "pants", "cargo pants"],
+  jacket: ["jacket", "bomber", "varsity", "denim jacket"],
+  shorts: ["shorts", "cargo shorts"],
+  top: ["top", "crop", "blouse", "tee"],
+  dress: ["dress", "maxi", "midi"],
+  skirt: ["skirt", "mini skirt"],
+  pants: ["pants", "trousers", "leggings", "palazzo", "jogger", "track"],
+};
+
+const typeLabels: Record<string, string> = {
+  tshirt: "T-Shirts",
+  hoodie: "Hoodies",
+  jogger: "Joggers",
+  jacket: "Jackets",
+  shorts: "Shorts",
+  top: "Tops",
+  dress: "Dresses",
+  skirt: "Skirts",
+  pants: "Pants",
+};
+
 const CategoryPage = () => {
   const { category } = useParams<{ category: string }>();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const typeFilter = searchParams.get("type") || "";
   const cat = (category === "women" ? "women" : category === "accessories" ? "accessories" : "men") as "men" | "women" | "accessories";
   const [sortBy, setSortBy] = useState("popular");
   const [showSort, setShowSort] = useState(false);
@@ -27,7 +53,18 @@ const CategoryPage = () => {
 
   const products = useMemo(() => {
     const rawList = dbProducts && dbProducts.length > 0 ? dbProducts : getProductsByCategory(cat);
-    const list = [...rawList];
+    let list = [...rawList];
+
+    // Apply subcategory type filter
+    if (typeFilter && typeKeywords[typeFilter]) {
+      const keywords = typeKeywords[typeFilter];
+      list = list.filter((p) => {
+        const name = p.name.toLowerCase();
+        const desc = (p.description || "").toLowerCase();
+        return keywords.some((kw) => name.includes(kw) || desc.includes(kw));
+      });
+    }
+
     switch (sortBy) {
       case "price-asc": return list.sort((a, b) => a.price - b.price);
       case "price-desc": return list.sort((a, b) => b.price - a.price);
@@ -39,12 +76,19 @@ const CategoryPage = () => {
       });
       default: return list;
     }
-  }, [cat, sortBy, dbProducts]);
+  }, [cat, sortBy, dbProducts, typeFilter]);
 
   const titleMap = { men: "MEN'S COLLECTION", women: "WOMEN'S COLLECTION", accessories: "ACCESSORIES" };
-  const title = titleMap[cat];
+  const title = typeFilter && typeLabels[typeFilter]
+    ? `${cat === "men" ? "MEN'S" : "WOMEN'S"} ${typeLabels[typeFilter].toUpperCase()}`
+    : titleMap[cat];
   const gradientMap = { men: "gradient-cool", women: "gradient-warm", accessories: "gradient-cool" };
   const gradientClass = gradientMap[cat];
+
+  const clearTypeFilter = () => {
+    searchParams.delete("type");
+    setSearchParams(searchParams);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -65,11 +109,37 @@ const CategoryPage = () => {
         </div>
       </motion.section>
 
+      {/* Breadcrumb */}
+      <div className="bg-card border-b border-border">
+        <div className="container mx-auto px-4 py-2">
+          <div className="flex items-center gap-2 font-body text-xs text-muted-foreground">
+            <Link to="/" className="hover:text-primary">Home</Link>
+            <span>›</span>
+            <Link to={`/category/${cat}`} className="hover:text-primary capitalize">{cat}</Link>
+            {typeFilter && typeLabels[typeFilter] && (
+              <>
+                <span>›</span>
+                <span className="text-foreground font-semibold">{typeLabels[typeFilter]}</span>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
       <div className="container mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <SlidersHorizontal className="w-4 h-4 text-muted-foreground" />
             <span className="font-body text-sm font-semibold text-foreground">Filters</span>
+            {typeFilter && typeLabels[typeFilter] && (
+              <button
+                onClick={clearTypeFilter}
+                className="flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 text-primary font-body text-xs font-semibold"
+              >
+                {typeLabels[typeFilter]}
+                <X className="w-3 h-3" />
+              </button>
+            )}
           </div>
 
           <div className="relative">
@@ -111,6 +181,11 @@ const CategoryPage = () => {
         {products.length === 0 && (
           <div className="text-center py-20 text-muted-foreground">
             <p className="font-display text-2xl">No products found</p>
+            {typeFilter && (
+              <button onClick={clearTypeFilter} className="mt-4 font-body text-sm text-primary hover:underline">
+                Clear filter and show all
+              </button>
+            )}
           </div>
         )}
       </div>
