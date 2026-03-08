@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
 
 export interface CartItem {
-  productId: number;
+  productId: number | string;
   name: string;
   price: number;
   image: string;
@@ -15,8 +15,8 @@ interface CartContextType {
   isOpen: boolean;
   setIsOpen: (v: boolean) => void;
   addItem: (item: Omit<CartItem, "quantity">) => void;
-  removeItem: (productId: number, size: string, color: string) => void;
-  updateQuantity: (productId: number, size: string, color: string, qty: number) => void;
+  removeItem: (productId: number | string, size: string, color: string) => void;
+  updateQuantity: (productId: number | string, size: string, color: string, qty: number) => void;
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
@@ -45,11 +45,11 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsOpen(true);
   }, []);
 
-  const removeItem = useCallback((productId: number, size: string, color: string) => {
+  const removeItem = useCallback((productId: number | string, size: string, color: string) => {
     setItems((prev) => prev.filter((i) => !(i.productId === productId && i.size === size && i.color === color)));
   }, []);
 
-  const updateQuantity = useCallback((productId: number, size: string, color: string, qty: number) => {
+  const updateQuantity = useCallback((productId: number | string, size: string, color: string, qty: number) => {
     if (qty <= 0) {
       removeItem(productId, size, color);
       return;

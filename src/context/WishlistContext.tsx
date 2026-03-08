@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
 
 export interface WishlistItem {
-  productId: number;
+  productId: number | string;
   name: string;
   price: number;
   originalPrice: number;
@@ -12,8 +12,8 @@ export interface WishlistItem {
 interface WishlistContextType {
   items: WishlistItem[];
   addItem: (item: WishlistItem) => void;
-  removeItem: (productId: number) => void;
-  isWishlisted: (productId: number) => boolean;
+  removeItem: (productId: number | string) => void;
+  isWishlisted: (productId: number | string) => boolean;
   toggleWishlist: (item: WishlistItem) => void;
   totalItems: number;
 }
@@ -30,11 +30,11 @@ export const WishlistProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     });
   }, []);
 
-  const removeItem = useCallback((productId: number) => {
+  const removeItem = useCallback((productId: number | string) => {
     setItems((prev) => prev.filter((i) => i.productId !== productId));
   }, []);
 
-  const isWishlisted = useCallback((productId: number) => {
+  const isWishlisted = useCallback((productId: number | string) => {
     return items.some((i) => i.productId === productId);
   }, [items]);
 

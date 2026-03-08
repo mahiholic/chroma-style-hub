@@ -14,8 +14,8 @@ const WishlistPage = () => {
   const { addItem } = useCart();
   const navigate = useNavigate();
 
-  const handleMoveToBag = (productId: number) => {
-    const product = getProductById(productId);
+  const handleMoveToBag = (productId: number | string) => {
+    const product = getProductById(Number(productId));
     if (!product) return;
     addItem({
       productId: product.id,

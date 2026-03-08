@@ -1,11 +1,16 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useDbProducts } from "@/hooks/useDbProducts";
 import { allProducts } from "@/data/products";
 import ProductCard from "@/components/ProductCard";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const TrendingProducts = () => {
   const navigate = useNavigate();
-  const products = allProducts.slice(0, 8);
+  const { data: dbProducts, isLoading } = useDbProducts();
+
+  // Use DB products if available, fallback to static
+  const products = (dbProducts && dbProducts.length > 0 ? dbProducts : allProducts).slice(0, 8);
 
   return (
     <section className="py-12 bg-background">
@@ -16,11 +21,19 @@ const TrendingProducts = () => {
             View All →
           </button>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-          {products.map((product, i) => (
-            <ProductCard key={product.id} product={product} index={i} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="aspect-[3/4] rounded-xl" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+            {products.map((product, i) => (
+              <ProductCard key={product.id} product={product} index={i} />
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

@@ -19,7 +19,7 @@ import product18 from "@/assets/product-18.jpg";
 import product19 from "@/assets/product-19.jpg";
 
 export interface Product {
-  id: number;
+  id: number | string;
   name: string;
   price: number;
   originalPrice: number;
