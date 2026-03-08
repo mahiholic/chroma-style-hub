@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback } from "react";
 
 export interface WishlistItem {
-  productId: number;
+  productId: number | string;
   name: string;
   price: number;
   originalPrice: number;
