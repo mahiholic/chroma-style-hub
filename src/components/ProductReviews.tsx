@@ -27,7 +27,7 @@ const StarRating = ({ rating, onRate, interactive = false }: { rating: number; o
 );
 
 const ProductReviews = ({ productId, productRating }: ProductReviewsProps) => {
-  const [reviews, setReviews] = useState<Review[]>(getProductReviews(productId));
+  const [reviews, setReviews] = useState<Review[]>(getProductReviews(typeof productId === 'number' ? productId : 0));
   const [showForm, setShowForm] = useState(false);
   const [newRating, setNewRating] = useState(0);
   const [newName, setNewName] = useState("");
