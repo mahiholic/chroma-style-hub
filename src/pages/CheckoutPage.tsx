@@ -127,19 +127,30 @@ const CheckoutPage = () => {
       if (itemsError) throw itemsError;
 
       // Send WhatsApp notification in background (non-blocking)
-      supabase.functions.invoke("send-whatsapp-order", {
-        body: {
-          orderNumber,
-          customerName: form.name,
-          phone: form.phone,
-          email: form.email,
-          address: shippingAddress,
-          items: items.map((i) => ({ name: i.name, quantity: i.quantity, price: i.price })),
-          total,
-          paymentMethod: paymentMethod.toUpperCase(),
-          orderDate: new Date().toLocaleString("en-IN"),
-        },
-      }).catch((err) => console.error("WhatsApp notification failed:", err));
+      void supabase.functions
+        .invoke("send-whatsapp-order", {
+          body: {
+            orderNumber,
+            customerName: form.name,
+            phone: form.phone,
+            email: form.email,
+            address: shippingAddress,
+            items: items.map((i) => ({ name: i.name, quantity: i.quantity, price: i.price })),
+            total,
+            paymentMethod: paymentMethod.toUpperCase(),
+            orderDate: new Date().toLocaleString("en-IN"),
+          },
+        })
+        .then(({ data, error }) => {
+          if (error) {
+            console.error("WhatsApp notification failed:", error.message);
+            return;
+          }
+          if (data && typeof data === "object" && "success" in data && !data.success) {
+            console.warn("WhatsApp notification warning:", (data as { error?: string }).error || "Unknown warning");
+          }
+        })
+        .catch((err) => console.error("WhatsApp notification failed:", err));
 
       clearCart();
       toast({ title: "Order Placed! 🎉", description: `Order ${orderNumber} has been placed successfully. Your order has been confirmed!` });
