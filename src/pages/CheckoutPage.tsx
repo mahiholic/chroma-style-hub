@@ -56,7 +56,13 @@ const CheckoutPage = () => {
       setCouponError("Invalid coupon code");
       return;
     }
-    if (totalPrice < coupon.minOrder) {
+    if (coupon.type === "buy2get1") {
+      const totalQty = items.reduce((sum, i) => sum + i.quantity, 0);
+      if (totalQty < 3) {
+        setCouponError("Add at least 3 items to use Buy 2 Get 1 Free");
+        return;
+      }
+    } else if (totalPrice < coupon.minOrder) {
       setCouponError(`Minimum order ₹${coupon.minOrder} required`);
       return;
     }
