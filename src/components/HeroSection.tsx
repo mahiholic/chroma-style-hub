@@ -1,7 +1,19 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { Heart } from "lucide-react";
 import modelMen from "@/assets/model-men.png";
 import modelWomen from "@/assets/model-women.png";
+
+const floatingHearts = [
+  { left: "8%", delay: "0s", size: 20, color: "text-secondary" },
+  { left: "20%", delay: "1.2s", size: 14, color: "text-brand-orange" },
+  { left: "32%", delay: "2.4s", size: 18, color: "text-secondary" },
+  { left: "45%", delay: "0.6s", size: 12, color: "text-accent" },
+  { left: "58%", delay: "1.8s", size: 22, color: "text-brand-orange" },
+  { left: "72%", delay: "3s", size: 16, color: "text-secondary" },
+  { left: "85%", delay: "0.3s", size: 18, color: "text-brand-purple" },
+  { left: "92%", delay: "2.1s", size: 14, color: "text-secondary" },
+];
 
 const HeroSection = () => {
   return (
@@ -50,13 +62,31 @@ const HeroSection = () => {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.7 }}
-          className="text-center mt-12"
+          className="text-center mt-12 relative"
         >
-          <p className="font-body text-xs md:text-sm tracking-[0.3em] text-foreground/60 uppercase mb-2">A Special Dedication To</p>
-          <h2 className="font-display text-6xl md:text-8xl lg:text-9xl tracking-tight bg-gradient-to-r from-secondary via-brand-orange to-accent bg-clip-text text-transparent leading-none">
+          <div className="absolute inset-x-0 -top-8 bottom-0 pointer-events-none overflow-visible">
+            {floatingHearts.map((h, i) => (
+              <Heart
+                key={i}
+                className={`absolute bottom-0 ${h.color} fill-current animate-float-heart`}
+                style={{
+                  left: h.left,
+                  width: h.size,
+                  height: h.size,
+                  animationDelay: h.delay,
+                }}
+              />
+            ))}
+          </div>
+          <p className="font-body text-xs md:text-sm tracking-[0.3em] text-foreground/60 uppercase mb-2 relative">A Special Dedication To</p>
+          <h2 className="font-display text-6xl md:text-8xl lg:text-9xl tracking-tight bg-gradient-to-r from-secondary via-brand-orange to-accent bg-clip-text text-transparent leading-none relative">
             OMISHA
           </h2>
-          <p className="font-body text-sm md:text-base text-foreground/70 mt-3 italic">💛 You are loved 💛</p>
+          <p className="font-body text-sm md:text-base text-foreground/70 mt-3 italic relative inline-flex items-center gap-2 justify-center">
+            <Heart className="w-4 h-4 text-secondary fill-current animate-heart-beat" />
+            You are loved
+            <Heart className="w-4 h-4 text-secondary fill-current animate-heart-beat" />
+          </p>
         </motion.div>
       </div>
     </section>
