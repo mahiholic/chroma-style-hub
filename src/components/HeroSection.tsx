@@ -45,6 +45,19 @@ const HeroSection = () => {
           <h2 className="font-display text-3xl md:text-5xl text-foreground"><span className="text-accent">O</span>N Y<span className="text-brand-orange">O</span>U</h2>
           <p className="text-muted-foreground mt-2 font-body text-sm md:text-base">Homegrown & Proud <span className="font-semibold text-foreground">Since 2024</span></p>
         </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.7 }}
+          className="text-center mt-12"
+        >
+          <p className="font-body text-xs md:text-sm tracking-[0.3em] text-foreground/60 uppercase mb-2">A Special Dedication To</p>
+          <h2 className="font-display text-6xl md:text-8xl lg:text-9xl tracking-tight bg-gradient-to-r from-secondary via-brand-orange to-accent bg-clip-text text-transparent leading-none">
+            OMISHA
+          </h2>
+          <p className="font-body text-sm md:text-base text-foreground/70 mt-3 italic">💛 You are loved 💛</p>
+        </motion.div>
       </div>
     </section>
   );
