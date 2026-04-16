@@ -1,7 +1,19 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { Heart } from "lucide-react";
 import modelMen from "@/assets/model-men.png";
 import modelWomen from "@/assets/model-women.png";
+
+const floatingHearts = [
+  { left: "8%", delay: "0s", size: 20, color: "text-secondary" },
+  { left: "20%", delay: "1.2s", size: 14, color: "text-brand-orange" },
+  { left: "32%", delay: "2.4s", size: 18, color: "text-secondary" },
+  { left: "45%", delay: "0.6s", size: 12, color: "text-accent" },
+  { left: "58%", delay: "1.8s", size: 22, color: "text-brand-orange" },
+  { left: "72%", delay: "3s", size: 16, color: "text-secondary" },
+  { left: "85%", delay: "0.3s", size: 18, color: "text-brand-purple" },
+  { left: "92%", delay: "2.1s", size: 14, color: "text-secondary" },
+];
 
 const HeroSection = () => {
   return (
