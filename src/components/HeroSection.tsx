@@ -62,13 +62,31 @@ const HeroSection = () => {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.7 }}
-          className="text-center mt-12"
+          className="text-center mt-12 relative"
         >
-          <p className="font-body text-xs md:text-sm tracking-[0.3em] text-foreground/60 uppercase mb-2">A Special Dedication To</p>
-          <h2 className="font-display text-6xl md:text-8xl lg:text-9xl tracking-tight bg-gradient-to-r from-secondary via-brand-orange to-accent bg-clip-text text-transparent leading-none">
+          <div className="absolute inset-x-0 -top-8 bottom-0 pointer-events-none overflow-visible">
+            {floatingHearts.map((h, i) => (
+              <Heart
+                key={i}
+                className={`absolute bottom-0 ${h.color} fill-current animate-float-heart`}
+                style={{
+                  left: h.left,
+                  width: h.size,
+                  height: h.size,
+                  animationDelay: h.delay,
+                }}
+              />
+            ))}
+          </div>
+          <p className="font-body text-xs md:text-sm tracking-[0.3em] text-foreground/60 uppercase mb-2 relative">A Special Dedication To</p>
+          <h2 className="font-display text-6xl md:text-8xl lg:text-9xl tracking-tight bg-gradient-to-r from-secondary via-brand-orange to-accent bg-clip-text text-transparent leading-none relative">
             OMISHA
           </h2>
-          <p className="font-body text-sm md:text-base text-foreground/70 mt-3 italic">💛 You are loved 💛</p>
+          <p className="font-body text-sm md:text-base text-foreground/70 mt-3 italic relative inline-flex items-center gap-2 justify-center">
+            <Heart className="w-4 h-4 text-secondary fill-current animate-heart-beat" />
+            You are loved
+            <Heart className="w-4 h-4 text-secondary fill-current animate-heart-beat" />
+          </p>
         </motion.div>
       </div>
     </section>
