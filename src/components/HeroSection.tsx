@@ -50,13 +50,14 @@ const HeroSection = () => {
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.7 }}
-          className="text-center mt-12"
+          className="text-center mt-12 px-2"
         >
-          <p className="font-body text-xs md:text-sm tracking-[0.3em] text-foreground/60 uppercase mb-2">A Special Dedication To</p>
-          <h2 className="font-display text-6xl md:text-8xl lg:text-9xl tracking-tight bg-gradient-to-r from-secondary via-brand-orange to-accent bg-clip-text text-transparent leading-none">
-            OMISHA
+          <h2 className="font-display text-3xl md:text-5xl text-foreground max-w-4xl mx-auto leading-tight">
+            Narela&apos;s Local Market, Now at Your Doorstep! 🛍️
           </h2>
-          <p className="font-body text-sm md:text-base text-foreground/70 mt-3 italic">💛 You are loved 💛</p>
+          <p className="font-body text-sm md:text-base text-foreground/70 mt-3 max-w-2xl mx-auto">
+            Shop everyday local products at affordable prices, delivered straight to your home. Supporting local sellers, serving our Narela community.
+          </p>
         </motion.div>
       </div>
     </section>
