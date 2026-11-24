@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      categories: {
+        Row: {
+          created_at: string
+          id: string
+          image_url: string | null
+          is_active: boolean
+          name: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name: string
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_active?: boolean
+          name?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           address: string | null
@@ -233,11 +263,15 @@ export type Database = {
       }
       products: {
         Row: {
+          available_colors: string[]
+          available_sizes: string[]
           category: string
+          category_id: string | null
           created_at: string
           description: string | null
           id: string
           image_url: string | null
+          image_urls: string[]
           is_active: boolean
           name: string
           original_price: number | null
@@ -246,11 +280,15 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          available_colors?: string[]
+          available_sizes?: string[]
           category?: string
+          category_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
           image_url?: string | null
+          image_urls?: string[]
           is_active?: boolean
           name: string
           original_price?: number | null
@@ -259,11 +297,15 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          available_colors?: string[]
+          available_sizes?: string[]
           category?: string
+          category_id?: string | null
           created_at?: string
           description?: string | null
           id?: string
           image_url?: string | null
+          image_urls?: string[]
           is_active?: boolean
           name?: string
           original_price?: number | null
@@ -271,7 +313,15 @@ export type Database = {
           stock?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "products_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {

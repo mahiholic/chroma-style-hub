@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1795498441351,
+      "tag": "0000_dynamic_categories_and_product_metadata",
+      "breakpoints": true
+    }
+  ]
+}

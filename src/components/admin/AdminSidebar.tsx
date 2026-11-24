@@ -1,4 +1,4 @@
-import { LayoutDashboard, ShoppingCart, Package, Users, Settings, LogOut, ChevronLeft } from "lucide-react";
+import { LayoutDashboard, ShoppingCart, Package, Tags, Users, Settings, LogOut, ChevronLeft } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useAdminAuth } from "@/context/AdminAuthContext";
@@ -20,6 +20,7 @@ const navItems = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
   { title: "Orders", url: "/admin/orders", icon: ShoppingCart },
   { title: "Products", url: "/admin/products", icon: Package },
+  { title: "Manage Categories", url: "/admin/categories", icon: Tags },
   { title: "Customers", url: "/admin/customers", icon: Users },
   { title: "Settings", url: "/admin/settings", icon: Settings },
 ];

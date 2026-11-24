@@ -44,7 +44,9 @@ export interface Product {
   rating: number;
   tag: string;
   tagColor: string;
-  category: "men" | "women" | "accessories";
+  category: string;
+  categoryId?: string;
+  images?: string[];
   sizes: string[];
   description: string;
   colors: ProductColor[];

@@ -6,7 +6,9 @@ import StoreNavbar from "@/components/StoreNavbar";
 import StoreFooter from "@/components/StoreFooter";
 import ProductCard from "@/components/ProductCard";
 import { useDbProducts } from "@/hooks/useDbProducts";
+import { useCategories } from "@/hooks/useCategories";
 import { getProductsByCategory } from "@/data/products";
+import { filterProductsByCategoryId } from "@/lib/category-products";
 
 const sortOptions = [
   { label: "Popular", value: "popular" },
@@ -45,14 +47,20 @@ const CategoryPage = () => {
   const { category } = useParams<{ category: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const typeFilter = searchParams.get("type") || "";
-  const cat = (category === "women" ? "women" : category === "accessories" ? "accessories" : "men") as "men" | "women" | "accessories";
+  const categorySlug = category || "";
+  const isLegacyCategory = ["men", "women", "accessories"].includes(categorySlug);
+  const { data: categories = [], isLoading: categoriesLoading, isError: categoriesError } = useCategories();
+  const activeCategory = categories.find((item) => item.slug === categorySlug);
+  const { data: dbProducts, isError: productsError } = useDbProducts(undefined, activeCategory?.id, Boolean(activeCategory));
   const [sortBy, setSortBy] = useState("popular");
   const [showSort, setShowSort] = useState(false);
 
-  const { data: dbProducts } = useDbProducts(cat);
-
   const products = useMemo(() => {
-    const rawList = dbProducts && dbProducts.length > 0 ? dbProducts : getProductsByCategory(cat);
+    const rawList = activeCategory
+      ? filterProductsByCategoryId(dbProducts || [], activeCategory.id)
+      : isLegacyCategory && (categoriesError || productsError)
+        ? getProductsByCategory(categorySlug as "men" | "women" | "accessories")
+        : [];
     let list = [...rawList];
 
     // Apply subcategory type filter
@@ -76,19 +84,49 @@ const CategoryPage = () => {
       });
       default: return list;
     }
-  }, [cat, sortBy, dbProducts, typeFilter]);
+  }, [activeCategory, isLegacyCategory, categoriesError, productsError, categorySlug, sortBy, dbProducts, typeFilter]);
 
-  const titleMap = { men: "MEN'S COLLECTION", women: "WOMEN'S COLLECTION", accessories: "ACCESSORIES" };
+  const baseTitle = categorySlug === "men"
+    ? "MEN'S"
+    : categorySlug === "women"
+      ? "WOMEN'S"
+      : activeCategory?.name.toUpperCase() || "";
   const title = typeFilter && typeLabels[typeFilter]
-    ? `${cat === "men" ? "MEN'S" : "WOMEN'S"} ${typeLabels[typeFilter].toUpperCase()}`
-    : titleMap[cat];
-  const gradientMap = { men: "gradient-cool", women: "gradient-warm", accessories: "gradient-cool" };
-  const gradientClass = gradientMap[cat];
-
+    ? `${baseTitle} ${typeLabels[typeFilter].toUpperCase()}`
+    : categorySlug === "men" || categorySlug === "women"
+      ? `${baseTitle} COLLECTION`
+      : baseTitle;
+  const gradientClass = categorySlug === "women" ? "gradient-warm" : "gradient-cool";
   const clearTypeFilter = () => {
-    searchParams.delete("type");
-    setSearchParams(searchParams);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("type");
+    setSearchParams(nextParams);
   };
+
+  if (categoriesLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <StoreNavbar />
+        <div className="flex min-h-80 items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        </div>
+        <StoreFooter />
+      </div>
+    );
+  }
+
+  if (!activeCategory && !(categoriesError && isLegacyCategory)) {
+    return (
+      <div className="min-h-screen bg-background">
+        <StoreNavbar />
+        <div className="container mx-auto px-4 py-20 text-center">
+          <h1 className="font-display text-3xl text-foreground">CATEGORY NOT FOUND</h1>
+          <Link to="/" className="mt-4 inline-block font-body text-sm text-primary hover:underline">Back to home</Link>
+        </div>
+        <StoreFooter />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -99,6 +137,12 @@ const CategoryPage = () => {
         animate={{ opacity: 1 }}
         className={`${gradientClass} py-16 md:py-24 text-center relative overflow-hidden`}
       >
+        {activeCategory?.image_url && (
+          <>
+            <img src={activeCategory.image_url} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-foreground/55" />
+          </>
+        )}
         <div className="absolute inset-0 opacity-[0.06]" style={{
           backgroundImage: `repeating-linear-gradient(45deg, transparent, transparent 20px, currentColor 20px, currentColor 21px)`
         }} />
@@ -115,7 +159,7 @@ const CategoryPage = () => {
           <div className="flex items-center gap-2 font-body text-xs text-muted-foreground">
             <Link to="/" className="hover:text-primary">Home</Link>
             <span>›</span>
-            <Link to={`/category/${cat}`} className="hover:text-primary capitalize">{cat}</Link>
+            <Link to={`/category/${categorySlug}`} className="hover:text-primary capitalize">{activeCategory?.name || categorySlug}</Link>
             {typeFilter && typeLabels[typeFilter] && (
               <>
                 <span>›</span>
@@ -180,7 +224,7 @@ const CategoryPage = () => {
 
         {products.length === 0 && (
           <div className="text-center py-20 text-muted-foreground">
-            <p className="font-display text-2xl">No products found</p>
+            <p className="font-display text-2xl">No products in {activeCategory?.name || categorySlug} yet</p>
             {typeFilter && (
               <button onClick={clearTypeFilter} className="mt-4 font-body text-sm text-primary hover:underline">
                 Clear filter and show all

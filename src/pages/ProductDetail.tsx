@@ -31,9 +31,10 @@ const ProductDetail = () => {
   const [pincodeResult, setPincodeResult] = useState<string | null>(null);
 
   const { data: dbRelated = [] } = useDbProducts(product?.category);
+  const relatedProductsQuery = useDbProducts(product?.category, product?.categoryId);
   const staticRelated = allProducts.filter((p) => p.category === product?.category && String(p.id) !== id).slice(0, 4);
-  const related = dbRelated.length > 0
-    ? dbRelated.filter((p) => String(p.id) !== id).slice(0, 4)
+  const related = (relatedProductsQuery.data || dbRelated).length > 0
+    ? (relatedProductsQuery.data || dbRelated).filter((p) => String(p.id) !== id).slice(0, 4)
     : staticRelated;
 
   if (!staticProduct && dbLoading) {
@@ -65,6 +66,9 @@ const ProductDetail = () => {
   const wishlisted = isWishlisted(product.id);
   const discount = Math.round((1 - product.price / product.originalPrice) * 100);
   const displayImage = currentImage || product.image;
+  const thumbnailImages = product.images?.length
+    ? product.images
+    : product.colors.map((color) => color.image).filter((image): image is string => Boolean(image));
 
   const handleColorSelect = (colorName: string) => {
     setSelectedColor(colorName);
@@ -75,8 +79,8 @@ const ProductDetail = () => {
   };
 
   const handleAddToCart = () => {
-    if (!selectedSize) { toast.error("Please select a size"); return; }
-    if (!selectedColor) { toast.error("Please select a color"); return; }
+    if (product.sizes.length > 0 && !selectedSize) { toast.error("Please select a size"); return; }
+    if (product.colors.length > 0 && !selectedColor) { toast.error("Please select a color"); return; }
     addItem({
       productId: product.id,
       name: product.name,
@@ -118,7 +122,7 @@ const ProductDetail = () => {
           <div className="flex items-center gap-2 font-body text-xs text-muted-foreground">
             <Link to="/" className="hover:text-primary">Home</Link>
             <span>›</span>
-            <Link to={`/category/${product.category}`} className="hover:text-primary capitalize">{product.category}</Link>
+            <Link to={`/category/${product.category}`} className="hover:text-primary capitalize">{product.categoryName || product.category}</Link>
             <span>›</span>
             <span className="text-foreground font-semibold truncate max-w-[200px]">{product.name}</span>
           </div>
@@ -141,28 +145,22 @@ const ProductDetail = () => {
               </button>
             </div>
             {/* Thumbnail strip */}
-            <div className="flex gap-2">
-              {product.colors.filter(c => c.image).length > 0
-                ? product.colors.filter(c => c.image).map((c, i) => (
-                    <div
-                      key={c.name}
-                      onClick={() => handleColorSelect(c.name)}
-                      className={`w-16 h-20 rounded border-2 overflow-hidden cursor-pointer ${
-                        (selectedColor === c.name || (!selectedColor && i === 0))
-                          ? "border-primary"
-                          : "border-border hover:border-foreground"
-                      }`}
-                    >
-                      <img src={c.image!} alt={c.name} className="w-full h-full object-cover" />
-                    </div>
-                  ))
-                : [0, 1, 2, 3].map((i) => (
-                    <div key={i} className={`w-16 h-20 rounded border-2 overflow-hidden cursor-pointer ${i === 0 ? "border-primary" : "border-border hover:border-foreground"}`}>
-                      <img src={product.image} alt="" className="w-full h-full object-cover opacity-90" />
-                    </div>
-                  ))
-              }
-            </div>
+            {thumbnailImages.length > 0 && (
+              <div className="flex gap-2 overflow-x-auto">
+                {thumbnailImages.map((image, i) => (
+                  <Button
+                    key={`${image}-${i}`}
+                    type="button"
+                    variant="ghost"
+                    aria-label={`View product image ${i + 1}`}
+                    onClick={() => setCurrentImage(image)}
+                    className={`h-20 w-16 shrink-0 rounded border-2 p-0 overflow-hidden ${displayImage === image ? "border-primary" : "border-border hover:border-foreground"}`}
+                  >
+                    <img src={image} alt={`${product.name} view ${i + 1}`} className="h-full w-full object-cover" />
+                  </Button>
+                ))}
+              </div>
+            )}
           </motion.div>
 
           {/* Right: Product Info */}
@@ -206,10 +204,10 @@ const ProductDetail = () => {
 
             {/* Color */}
             <div className="mt-5">
-              <p className="font-body text-sm font-bold text-foreground mb-2">
+            {product.colors.length > 0 && <p className="font-body text-sm font-bold text-foreground mb-2">
                 Color: <span className="font-normal text-muted-foreground">{selectedColor || "Select"}</span>
-              </p>
-              <div className="flex gap-2">
+              </p>}
+              {product.colors.length > 0 && <div className="flex gap-2">
                 {product.colors.map((c) => (
                   <button
                     key={c.name}
@@ -221,11 +219,11 @@ const ProductDetail = () => {
                     title={c.name}
                   />
                 ))}
-              </div>
+              </div>}
             </div>
 
             {/* Size */}
-            <div className="mt-5">
+            {product.sizes.length > 0 && <div className="mt-5">
               <div className="flex items-center justify-between mb-2">
                 <p className="font-body text-sm font-bold text-foreground">Select Size</p>
                 <button className="font-body text-xs font-bold text-primary hover:underline">SIZE GUIDE</button>
@@ -245,7 +243,7 @@ const ProductDetail = () => {
                   </button>
                 ))}
               </div>
-            </div>
+            </div>}
 
             {/* Action Buttons */}
             <div className="flex gap-3 mt-6">

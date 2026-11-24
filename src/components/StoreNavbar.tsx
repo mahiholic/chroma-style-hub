@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useCart } from "@/context/CartContext";
 import { useWishlist } from "@/context/WishlistContext";
 import { Link, useNavigate } from "react-router-dom";
+import { useCategories } from "@/hooks/useCategories";
 
 const menLinks = [
   { label: "T-Shirts", href: "/category/men?type=tshirt" },
@@ -29,6 +30,7 @@ const StoreNavbar = () => {
   const [hoveredMenu, setHoveredMenu] = useState<string | null>(null);
   const { totalItems, setIsOpen } = useCart();
   const { totalItems: wishlistCount } = useWishlist();
+  const { data: categories = [] } = useCategories();
   const navigate = useNavigate();
   const searchRef = useRef<HTMLInputElement>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
@@ -75,23 +77,23 @@ const StoreNavbar = () => {
             {[
               { label: "MEN", href: "/category/men", links: menLinks },
               { label: "WOMEN", href: "/category/women", links: womenLinks },
-              { label: "ACCESSORIES", href: "/accessories", links: null },
+              { label: "CATEGORIES", href: "/category/men", links: categories.map((category) => ({ label: category.name, href: `/category/${category.slug}` })) },
               { label: "NEW DROPS", href: "/new-drops", links: null },
             ].map((item) => (
               <div
                 key={item.label}
                 className="relative"
-                onMouseEnter={() => item.links && handleMenuEnter(item.label)}
-                onMouseLeave={handleMenuLeave}
+                onMouseEnter={() => item.links?.length && handleMenuEnter(item.label)}
+                onMouseLeave={() => item.links?.length && handleMenuLeave()}
               >
                 <Link
                   to={item.href}
                   className="font-body text-sm font-bold tracking-wide text-foreground hover:text-primary px-3 py-4 inline-flex items-center gap-1 transition-colors"
                 >
                   {item.label}
-                  {item.links && <ChevronDown className="w-3 h-3" />}
+                  {!!item.links?.length && <ChevronDown className="w-3 h-3" />}
                 </Link>
-                {item.links && hoveredMenu === item.label && (
+                {!!item.links?.length && hoveredMenu === item.label && (
                   <motion.div
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -204,7 +206,7 @@ const StoreNavbar = () => {
                 {[
                   { label: "MEN", href: "/category/men" },
                   { label: "WOMEN", href: "/category/women" },
-                  { label: "ACCESSORIES", href: "/accessories" },
+                  { label: "ACCESSORIES", href: "/category/accessories" },
                   { label: "NEW DROPS", href: "/new-drops" },
                 ].map((link) => (
                   <li key={link.label}>
@@ -217,6 +219,23 @@ const StoreNavbar = () => {
                     </Link>
                   </li>
                 ))}
+                {categories.length > 0 && (
+                  <li className="pt-3">
+                    <p className="px-2 pb-2 font-body text-xs font-bold text-muted-foreground">ALL CATEGORIES</p>
+                    <div className="grid grid-cols-2 gap-x-4">
+                      {categories.map((category) => (
+                        <Link
+                          key={category.id}
+                          to={`/category/${category.slug}`}
+                          onClick={() => setMobileOpen(false)}
+                          className="py-2 px-2 font-body text-sm text-foreground hover:text-primary"
+                        >
+                          {category.name}
+                        </Link>
+                      ))}
+                    </div>
+                  </li>
+                )}
                 <li className="pt-2 flex gap-4">
                   <Link to="/wishlist" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 font-body text-sm font-semibold text-foreground">
                     <Heart className="w-4 h-4" /> Wishlist
