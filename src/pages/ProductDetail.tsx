@@ -30,11 +30,10 @@ const ProductDetail = () => {
   const [pincode, setPincode] = useState("");
   const [pincodeResult, setPincodeResult] = useState<string | null>(null);
 
-  const { data: dbRelated = [] } = useDbProducts(product?.category);
-  const relatedProductsQuery = useDbProducts(product?.category, product?.categoryId);
+  const { data: dbRelated = [] } = useDbProducts(product?.category, product?.categoryId);
   const staticRelated = allProducts.filter((p) => p.category === product?.category && String(p.id) !== id).slice(0, 4);
-  const related = (relatedProductsQuery.data || dbRelated).length > 0
-    ? (relatedProductsQuery.data || dbRelated).filter((p) => String(p.id) !== id).slice(0, 4)
+  const related = dbRelated.length > 0
+    ? dbRelated.filter((p) => String(p.id) !== id).slice(0, 4)
     : staticRelated;
 
   if (!staticProduct && dbLoading) {

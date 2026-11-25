@@ -1,208 +1,319 @@
-import { useEffect, useState, useRef } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { ImagePlus, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { Link } from "react-router-dom";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
-import { AdminLayout } from "@/components/admin/AdminLayout";
-import { Plus, Pencil, Trash2, Search, Upload, X } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import { useCategories } from "@/hooks/useCategories";
+import { supabase } from "@/integrations/supabase/client";
 
-const CATEGORIES = ["men", "women", "accessories", "general"];
+interface ProductForm {
+  name: string;
+  description: string;
+  price: number;
+  original_price: number | null;
+  category_id: string;
+  image_urls: string[];
+  stock: number;
+  is_active: boolean;
+  available_sizes: string[];
+  available_colors: string[];
+}
 
-const emptyProduct = { name: "", description: "", price: 0, original_price: 0, category: "general", image_url: "", stock: 0, is_active: true };
+const emptyProduct = (categoryId = ""): ProductForm => ({
+  name: "",
+  description: "",
+  price: 0,
+  original_price: null,
+  category_id: categoryId,
+  image_urls: [],
+  stock: 0,
+  is_active: true,
+  available_sizes: [],
+  available_colors: [],
+});
+
+const splitOptions = (value: string) => value.split(",").map((item) => item.trim()).filter(Boolean);
 
 const AdminProductsPage = () => {
   const [products, setProducts] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<any>(null);
-  const [form, setForm] = useState(emptyProduct);
+  const [form, setForm] = useState<ProductForm>(emptyProduct());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { data: categories = [], isLoading: categoriesLoading } = useCategories(true);
   const { toast } = useToast();
 
   const fetchProducts = async () => {
-    let q = supabase.from("products").select("*").order("created_at", { ascending: false });
-    if (search) q = q.ilike("name", `%${search}%`);
-    const { data } = await q;
+    let query = supabase
+      .from("products")
+      .select("*, categories(name, slug)")
+      .order("created_at", { ascending: false });
+    if (search.trim()) query = query.ilike("name", `%${search.trim()}%`);
+    const { data, error } = await query;
+    if (error) {
+      toast({ title: "Could not load products", description: error.message, variant: "destructive" });
+      return;
+    }
     setProducts(data || []);
   };
 
-  useEffect(() => { fetchProducts(); }, [search]);
+  useEffect(() => { void fetchProducts(); }, [search]);
 
-  const openNew = () => { setEditing(null); setForm(emptyProduct); setImagePreview(null); setDialogOpen(true); };
-  const openEdit = (p: any) => {
-    setEditing(p);
-    setForm({ name: p.name, description: p.description || "", price: p.price, original_price: p.original_price || 0, category: p.category, image_url: p.image_url || "", stock: p.stock, is_active: p.is_active });
-    setImagePreview(p.image_url || null);
+  const openNew = () => {
+    setEditing(null);
+    setForm(emptyProduct(categories.find((category) => category.is_active)?.id || ""));
     setDialogOpen(true);
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const openEdit = (product: any) => {
+    setEditing(product);
+    const images = Array.isArray(product.image_urls) && product.image_urls.length > 0
+      ? product.image_urls
+      : product.image_url
+        ? [product.image_url]
+        : [];
+    setForm({
+      name: product.name,
+      description: product.description || "",
+      price: Number(product.price),
+      original_price: product.original_price === null ? null : Number(product.original_price),
+      category_id: product.category_id || "",
+      image_urls: images,
+      stock: Number(product.stock || 0),
+      is_active: Boolean(product.is_active),
+      available_sizes: product.available_sizes || [],
+      available_colors: product.available_colors || [],
+    });
+    setDialogOpen(true);
+  };
 
-    if (!file.type.startsWith("image/")) {
-      toast({ title: "Invalid file", description: "Please select an image file", variant: "destructive" });
+  const handleImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length === 0) return;
+    if (files.some((file) => !file.type.startsWith("image/"))) {
+      toast({ title: "Invalid file", description: "Choose image files only.", variant: "destructive" });
+      event.target.value = "";
       return;
     }
 
     setUploading(true);
-    const ext = file.name.split(".").pop();
-    const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${ext}`;
-
-    const { error } = await supabase.storage.from("product-images").upload(fileName, file);
-    if (error) {
-      toast({ title: "Upload failed", description: error.message, variant: "destructive" });
+    try {
+      const uploadedUrls: string[] = [];
+      for (const file of files) {
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+        const filePath = `products/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`;
+        const { error } = await supabase.storage.from("product-images").upload(filePath, file);
+        if (error) throw new Error(error.message);
+        const { data } = supabase.storage.from("product-images").getPublicUrl(filePath);
+        uploadedUrls.push(data.publicUrl);
+      }
+      setForm((current) => ({ ...current, image_urls: [...current.image_urls, ...uploadedUrls] }));
+      toast({ title: `${uploadedUrls.length} image${uploadedUrls.length === 1 ? "" : "s"} uploaded` });
+    } catch (error) {
+      toast({ title: "Upload failed", description: error instanceof Error ? error.message : "Please try again.", variant: "destructive" });
+    } finally {
       setUploading(false);
-      return;
+      event.target.value = "";
     }
-
-    const { data: urlData } = supabase.storage.from("product-images").getPublicUrl(fileName);
-    setForm({ ...form, image_url: urlData.publicUrl });
-    setImagePreview(urlData.publicUrl);
-    setUploading(false);
-    toast({ title: "Image uploaded" });
   };
 
-  const removeImage = () => {
-    setForm({ ...form, image_url: "" });
-    setImagePreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+  const removeImage = (imageUrl: string) => {
+    setForm((current) => ({ ...current, image_urls: current.image_urls.filter((url) => url !== imageUrl) }));
   };
 
   const handleSave = async () => {
-    if (!form.name || !form.price) {
-      toast({ title: "Missing fields", description: "Name and price required", variant: "destructive" });
+    if (!form.name.trim() || form.price <= 0) {
+      toast({ title: "Missing fields", description: "Product name and a price greater than zero are required.", variant: "destructive" });
       return;
     }
-    if (editing) {
-      await supabase.from("products").update(form).eq("id", editing.id);
-      toast({ title: "Product updated" });
-    } else {
-      await supabase.from("products").insert(form);
-      toast({ title: "Product created" });
+    const selectedCategory = categories.find((category) => category.id === form.category_id);
+    if (!selectedCategory || (!editing && !selectedCategory.is_active)) {
+      toast({ title: "Choose an active category", description: "Create or activate a category before adding products.", variant: "destructive" });
+      return;
     }
+
+    const payload = {
+      name: form.name.trim(),
+      description: form.description.trim() || null,
+      price: form.price,
+      original_price: form.original_price && form.original_price > 0 ? form.original_price : null,
+      category: selectedCategory.slug,
+      category_id: selectedCategory.id,
+      image_url: form.image_urls[0] || null,
+      image_urls: form.image_urls,
+      stock: form.stock,
+      is_active: form.is_active,
+      available_sizes: form.available_sizes,
+      available_colors: form.available_colors,
+    };
+
+    setSaving(true);
+    const result = editing
+      ? await supabase.from("products").update(payload).eq("id", editing.id)
+      : await supabase.from("products").insert(payload);
+    setSaving(false);
+    if (result.error) {
+      toast({ title: "Could not save product", description: result.error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: editing ? "Product updated" : "Product created" });
     setDialogOpen(false);
-    fetchProducts();
+    await fetchProducts();
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this product?")) return;
-    await supabase.from("products").delete().eq("id", id);
+    if (!window.confirm("Delete this product?")) return;
+    const { error } = await supabase.from("products").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Could not delete product", description: error.message, variant: "destructive" });
+      return;
+    }
     toast({ title: "Product deleted" });
-    fetchProducts();
+    await fetchProducts();
   };
+
+  const availableCategories = categories.filter((category) => category.is_active || category.id === form.category_id);
 
   return (
     <AdminLayout>
       <div className="space-y-4">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <h2 className="font-display text-2xl tracking-wide">PRODUCTS</h2>
-          <Button onClick={openNew} className="gap-2 font-body"><Plus className="w-4 h-4" /> Add Product</Button>
+        <div className="flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+          <div>
+            <h2 className="font-display text-2xl tracking-wide">PRODUCTS</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Products appear only in their assigned category.</p>
+          </div>
+          <Button onClick={openNew} className="gap-2" disabled={categoriesLoading || !categories.some((category) => category.is_active)}>
+            <Plus className="h-4 w-4" /> Add Product
+          </Button>
         </div>
+
+        {categories.length === 0 && !categoriesLoading && (
+          <div className="flex flex-col items-start gap-2 border border-border p-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm text-muted-foreground">Create a category before adding products.</p>
+            <Button asChild variant="outline"><Link to="/admin/categories">Manage Categories</Link></Button>
+          </div>
+        )}
 
         <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Search products..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 font-body" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input placeholder="Search products..." value={search} onChange={(event) => setSearch(event.target.value)} className="pl-10" />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {products.length === 0 ? (
-            <p className="col-span-full text-center text-muted-foreground py-12 font-body">No products found. Add your first product!</p>
-          ) : products.map((p) => (
-            <Card key={p.id} className="overflow-hidden">
-              {p.image_url && (
-                <div className="aspect-square bg-muted">
-                  <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
-                </div>
-              )}
-              <CardContent className="p-4 space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <h3 className="font-body font-medium text-sm line-clamp-2">{p.name}</h3>
-                  <Badge variant="outline" className="text-xs capitalize shrink-0">{p.category}</Badge>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-display text-lg">₹{Number(p.price).toLocaleString()}</span>
-                  {p.original_price > p.price && (
-                    <span className="text-xs line-through text-muted-foreground">₹{Number(p.original_price).toLocaleString()}</span>
-                  )}
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground font-body">Stock: {p.stock}</span>
-                  <Badge variant={p.is_active ? "default" : "secondary"} className="text-xs">
-                    {p.is_active ? "Active" : "Inactive"}
-                  </Badge>
-                </div>
-                <div className="flex gap-2 pt-1">
-                  <Button variant="outline" size="sm" onClick={() => openEdit(p)} className="flex-1 gap-1 font-body text-xs">
-                    <Pencil className="w-3 h-3" /> Edit
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleDelete(p.id)} className="text-destructive hover:text-destructive gap-1 font-body text-xs">
-                    <Trash2 className="w-3 h-3" /> Delete
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+            <p className="col-span-full py-12 text-center text-muted-foreground">No products found. Add your first product.</p>
+          ) : products.map((product) => {
+            const image = product.image_urls?.[0] || product.image_url;
+            return (
+              <Card key={product.id} className="overflow-hidden">
+                {image && <div className="aspect-square bg-muted"><img src={image} alt={product.name} className="h-full w-full object-cover" /></div>}
+                <CardContent className="space-y-2 p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="line-clamp-2 text-sm font-medium">{product.name}</h3>
+                    <Badge variant="outline" className="shrink-0 text-xs">{product.categories?.name || product.category}</Badge>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-display text-lg">₹{Number(product.price).toLocaleString()}</span>
+                    {product.original_price > product.price && <span className="text-xs text-muted-foreground line-through">₹{Number(product.original_price).toLocaleString()}</span>}
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs text-muted-foreground">Stock: {product.stock}</span>
+                    <Badge variant={product.stock > 0 ? "secondary" : "destructive"} className="text-xs">
+                      {product.stock > 0 ? "Available" : "Out of stock"}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <Badge variant={product.is_active ? "default" : "secondary"} className="text-xs">
+                      {product.is_active ? "Active" : "Hidden"}
+                    </Badge>
+                    <div className="flex gap-1">
+                      <Button variant="outline" size="sm" onClick={() => openEdit(product)} className="gap-1 text-xs">
+                        <Pencil className="h-3 w-3" /> Edit
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => void handleDelete(product.id)} className="gap-1 text-xs text-destructive hover:text-destructive">
+                        <Trash2 className="h-3 w-3" /> Delete
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
 
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-h-[85vh] max-w-lg overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="font-display">{editing ? "EDIT PRODUCT" : "ADD PRODUCT"}</DialogTitle>
             </DialogHeader>
-            <div className="space-y-3 font-body">
-              <Input placeholder="Product Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-              <Input placeholder="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            <div className="space-y-4">
+              <Input placeholder="Product name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} />
+              <Input placeholder="Description" value={form.description} onChange={(event) => setForm({ ...form, description: event.target.value })} />
               <div className="grid grid-cols-2 gap-3">
-                <Input type="number" placeholder="Price" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
-                <Input type="number" placeholder="Original Price" value={form.original_price} onChange={(e) => setForm({ ...form, original_price: Number(e.target.value) })} />
+                <Input type="number" min="0" placeholder="Selling price" value={form.price} onChange={(event) => setForm({ ...form, price: Number(event.target.value) })} />
+                <Input type="number" min="0" placeholder="Original price (optional)" value={form.original_price ?? ""} onChange={(event) => setForm({ ...form, original_price: event.target.value ? Number(event.target.value) : null })} />
               </div>
-              <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+
+              <Select value={form.category_id} onValueChange={(value) => setForm({ ...form, category_id: value })}>
+                <SelectTrigger><SelectValue placeholder="Choose a category" /></SelectTrigger>
                 <SelectContent>
-                  {CATEGORIES.map((c) => <SelectItem key={c} value={c} className="capitalize">{c}</SelectItem>)}
+                  {availableCategories.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}{category.is_active ? "" : " (inactive)"}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
-              {/* Image Upload */}
               <div className="space-y-2">
-                <label className="text-sm font-medium">Product Image</label>
-                {imagePreview ? (
-                  <div className="relative rounded-lg overflow-hidden border border-border">
-                    <img src={imagePreview} alt="Preview" className="w-full h-40 object-cover" />
-                    <button
-                      type="button"
-                      onClick={removeImage}
-                      className="absolute top-2 right-2 p-1 rounded-full bg-background/80 hover:bg-background text-foreground"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <div
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary/50 transition-colors"
-                  >
-                    <Upload className="w-6 h-6 text-muted-foreground mb-2" />
-                    <p className="text-sm text-muted-foreground">{uploading ? "Uploading..." : "Click to upload image"}</p>
+                <p className="text-sm font-medium">Product images</p>
+                <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} disabled={uploading} />
+                <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} disabled={uploading} className="gap-2">
+                  <ImagePlus className="h-4 w-4" /> {uploading ? "Uploading…" : "Upload images"}
+                </Button>
+                {form.image_urls.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                    {form.image_urls.map((image, index) => (
+                      <div key={`${image}-${index}`} className="relative aspect-square overflow-hidden rounded border border-border">
+                        <img src={image} alt={`Product image ${index + 1}`} className="h-full w-full object-cover" />
+                        <Button type="button" variant="ghost" size="icon" aria-label={`Remove image ${index + 1}`} onClick={() => removeImage(image)} className="absolute right-1 top-1 h-7 w-7 bg-background/90">
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
                   </div>
                 )}
-                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} disabled={uploading} />
-                <Input placeholder="Or paste image URL" value={form.image_url} onChange={(e) => { setForm({ ...form, image_url: e.target.value }); setImagePreview(e.target.value || null); }} className="text-xs" />
               </div>
 
-              <Input type="number" placeholder="Stock" value={form.stock} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} />
-              <div className="flex items-center gap-2">
-                <input type="checkbox" checked={form.is_active} onChange={(e) => setForm({ ...form, is_active: e.target.checked })} />
-                <label className="text-sm">Active</label>
+              <div className="grid grid-cols-2 gap-3">
+                <Input type="number" min="0" placeholder="Stock quantity" value={form.stock} onChange={(event) => setForm({ ...form, stock: Math.max(0, Number(event.target.value)) })} />
+                <div className="flex items-center justify-center">
+                  <Badge variant={form.stock > 0 ? "secondary" : "destructive"}>{form.stock > 0 ? "Available" : "Out of stock"}</Badge>
+                </div>
               </div>
-              <Button onClick={handleSave} className="w-full font-display">{editing ? "UPDATE" : "CREATE"}</Button>
+              <Input placeholder="Available sizes, comma separated" value={form.available_sizes.join(", ")} onChange={(event) => setForm({ ...form, available_sizes: splitOptions(event.target.value) })} />
+              <Input placeholder="Available colours, comma separated" value={form.available_colors.join(", ")} onChange={(event) => setForm({ ...form, available_colors: splitOptions(event.target.value) })} />
+
+              <div className="flex items-center justify-between rounded border border-border p-3">
+                <div>
+                  <p className="text-sm font-medium">Visible in store</p>
+                  <p className="text-xs text-muted-foreground">Hide a product without deleting it.</p>
+                </div>
+                <Switch checked={form.is_active} onCheckedChange={(checked) => setForm({ ...form, is_active: checked })} aria-label="Product visible in store" />
+              </div>
+              <Button onClick={() => void handleSave()} disabled={saving || uploading} className="w-full">
+                {saving ? "Saving…" : editing ? "Save Changes" : "Create Product"}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
